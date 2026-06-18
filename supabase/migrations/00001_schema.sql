@@ -1,3 +1,25 @@
+-- ⚠️ Drop existing objects first (safe to re-run)
+DROP TABLE IF EXISTS physical_screenings CASCADE;
+DROP TABLE IF EXISTS wellness_entries CASCADE;
+DROP TABLE IF EXISTS training_entries CASCADE;
+DROP TABLE IF EXISTS recovery_milestones CASCADE;
+DROP TABLE IF EXISTS rtp_phases CASCADE;
+DROP TABLE IF EXISTS injuries CASCADE;
+DROP TABLE IF EXISTS notifications CASCADE;
+DROP TABLE IF EXISTS athletes CASCADE;
+DROP TABLE IF EXISTS user_profiles CASCADE;
+DROP TYPE IF EXISTS rtp_phase_status CASCADE;
+DROP TYPE IF EXISTS milestone_type CASCADE;
+DROP TYPE IF EXISTS injury_side CASCADE;
+DROP TYPE IF EXISTS injury_mechanism CASCADE;
+DROP TYPE IF EXISTS injury_status CASCADE;
+DROP TYPE IF EXISTS injury_severity CASCADE;
+DROP TYPE IF EXISTS training_type CASCADE;
+DROP TYPE IF EXISTS dominant_side CASCADE;
+DROP TYPE IF EXISTS gender CASCADE;
+DROP TYPE IF EXISTS notification_type CASCADE;
+DROP TYPE IF EXISTS user_role CASCADE;
+
 -- Create enums
 CREATE TYPE user_role AS ENUM ('athlete', 'coach', 'physiotherapist', 'sport_scientist', 'administrator');
 CREATE TYPE notification_type AS ENUM ('info', 'warning', 'success', 'error');
@@ -25,15 +47,15 @@ CREATE TABLE user_profiles (
 
 ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view own profile"
+CREATE POLICY "user_profiles_select"
   ON user_profiles FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can update own profile"
+CREATE POLICY "user_profiles_update"
   ON user_profiles FOR UPDATE
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Insert profile on signup"
+CREATE POLICY "user_profiles_insert"
   ON user_profiles FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
@@ -51,11 +73,11 @@ CREATE TABLE notifications (
 
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can view own notifications"
+CREATE POLICY "notifications_select"
   ON notifications FOR SELECT
   USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can update own notifications"
+CREATE POLICY "notifications_update"
   ON notifications FOR UPDATE
   USING (auth.uid() = user_id);
 
@@ -80,19 +102,19 @@ CREATE TABLE athletes (
 
 ALTER TABLE athletes ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Athletes are viewable by authenticated users"
+CREATE POLICY "athletes_select"
   ON athletes FOR SELECT
   USING (auth.role() = 'authenticated');
 
-CREATE POLICY "Athletes can be created by authenticated users"
+CREATE POLICY "athletes_insert"
   ON athletes FOR INSERT
   WITH CHECK (auth.role() = 'authenticated');
 
-CREATE POLICY "Athletes can be updated by authenticated users"
+CREATE POLICY "athletes_update"
   ON athletes FOR UPDATE
   USING (auth.role() = 'authenticated');
 
-CREATE POLICY "Athletes can be deleted by authenticated users"
+CREATE POLICY "athletes_delete"
   ON athletes FOR DELETE
   USING (auth.role() = 'authenticated');
 
@@ -120,19 +142,19 @@ CREATE TABLE injuries (
 
 ALTER TABLE injuries ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Injuries are viewable by authenticated users"
+CREATE POLICY "injuries_select"
   ON injuries FOR SELECT
   USING (auth.role() = 'authenticated');
 
-CREATE POLICY "Injuries can be created by authenticated users"
+CREATE POLICY "injuries_insert"
   ON injuries FOR INSERT
   WITH CHECK (auth.role() = 'authenticated');
 
-CREATE POLICY "Injuries can be updated by authenticated users"
+CREATE POLICY "injuries_update"
   ON injuries FOR UPDATE
   USING (auth.role() = 'authenticated');
 
-CREATE POLICY "Injuries can be deleted by authenticated users"
+CREATE POLICY "injuries_delete"
   ON injuries FOR DELETE
   USING (auth.role() = 'authenticated');
 
@@ -149,19 +171,19 @@ CREATE TABLE recovery_milestones (
 
 ALTER TABLE recovery_milestones ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Milestones are viewable by authenticated users"
+CREATE POLICY "milestones_select"
   ON recovery_milestones FOR SELECT
   USING (auth.role() = 'authenticated');
 
-CREATE POLICY "Milestones can be created by authenticated users"
+CREATE POLICY "milestones_insert"
   ON recovery_milestones FOR INSERT
   WITH CHECK (auth.role() = 'authenticated');
 
-CREATE POLICY "Milestones can be updated by authenticated users"
+CREATE POLICY "milestones_update"
   ON recovery_milestones FOR UPDATE
   USING (auth.role() = 'authenticated');
 
-CREATE POLICY "Milestones can be deleted by authenticated users"
+CREATE POLICY "milestones_delete"
   ON recovery_milestones FOR DELETE
   USING (auth.role() = 'authenticated');
 
@@ -181,19 +203,19 @@ CREATE TABLE rtp_phases (
 
 ALTER TABLE rtp_phases ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "RTP phases are viewable by authenticated users"
+CREATE POLICY "rtp_select"
   ON rtp_phases FOR SELECT
   USING (auth.role() = 'authenticated');
 
-CREATE POLICY "RTP phases can be created by authenticated users"
+CREATE POLICY "rtp_insert"
   ON rtp_phases FOR INSERT
   WITH CHECK (auth.role() = 'authenticated');
 
-CREATE POLICY "RTP phases can be updated by authenticated users"
+CREATE POLICY "rtp_update"
   ON rtp_phases FOR UPDATE
   USING (auth.role() = 'authenticated');
 
-CREATE POLICY "RTP phases can be deleted by authenticated users"
+CREATE POLICY "rtp_delete"
   ON rtp_phases FOR DELETE
   USING (auth.role() = 'authenticated');
 
@@ -212,19 +234,19 @@ CREATE TABLE training_entries (
 
 ALTER TABLE training_entries ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Training entries are viewable by authenticated users"
+CREATE POLICY "training_select"
   ON training_entries FOR SELECT
   USING (auth.role() = 'authenticated');
 
-CREATE POLICY "Training entries can be created by authenticated users"
+CREATE POLICY "training_insert"
   ON training_entries FOR INSERT
   WITH CHECK (auth.role() = 'authenticated');
 
-CREATE POLICY "Training entries can be updated by authenticated users"
+CREATE POLICY "training_update"
   ON training_entries FOR UPDATE
   USING (auth.role() = 'authenticated');
 
-CREATE POLICY "Training entries can be deleted by authenticated users"
+CREATE POLICY "training_delete"
   ON training_entries FOR DELETE
   USING (auth.role() = 'authenticated');
 
@@ -244,19 +266,19 @@ CREATE TABLE wellness_entries (
 
 ALTER TABLE wellness_entries ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Wellness entries are viewable by authenticated users"
+CREATE POLICY "wellness_select"
   ON wellness_entries FOR SELECT
   USING (auth.role() = 'authenticated');
 
-CREATE POLICY "Wellness entries can be created by authenticated users"
+CREATE POLICY "wellness_insert"
   ON wellness_entries FOR INSERT
   WITH CHECK (auth.role() = 'authenticated');
 
-CREATE POLICY "Wellness entries can be updated by authenticated users"
+CREATE POLICY "wellness_update"
   ON wellness_entries FOR UPDATE
   USING (auth.role() = 'authenticated');
 
-CREATE POLICY "Wellness entries can be deleted by authenticated users"
+CREATE POLICY "wellness_delete"
   ON wellness_entries FOR DELETE
   USING (auth.role() = 'authenticated');
 
@@ -305,19 +327,19 @@ CREATE TABLE physical_screenings (
 
 ALTER TABLE physical_screenings ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Screenings are viewable by authenticated users"
+CREATE POLICY "screenings_select"
   ON physical_screenings FOR SELECT
   USING (auth.role() = 'authenticated');
 
-CREATE POLICY "Screenings can be created by authenticated users"
+CREATE POLICY "screenings_insert"
   ON physical_screenings FOR INSERT
   WITH CHECK (auth.role() = 'authenticated');
 
-CREATE POLICY "Screenings can be updated by authenticated users"
+CREATE POLICY "screenings_update"
   ON physical_screenings FOR UPDATE
   USING (auth.role() = 'authenticated');
 
-CREATE POLICY "Screenings can be deleted by authenticated users"
+CREATE POLICY "screenings_delete"
   ON physical_screenings FOR DELETE
   USING (auth.role() = 'authenticated');
 
