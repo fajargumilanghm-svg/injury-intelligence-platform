@@ -1,0 +1,140 @@
+"use client";
+
+import { createClient } from "@/lib/supabase/client";
+import type { PhysicalScreening } from "@/types";
+
+export async function getScreenings(athleteId: string): Promise<PhysicalScreening[]> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("physical_screenings")
+    .select("*")
+    .eq("athlete_id", athleteId)
+    .order("screening_date", { ascending: false });
+  return data ?? [];
+}
+
+export async function getLatestScreening(athleteId: string): Promise<PhysicalScreening | null> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("physical_screenings")
+    .select("*")
+    .eq("athlete_id", athleteId)
+    .order("screening_date", { ascending: false })
+    .limit(1)
+    .single();
+  return data;
+}
+
+export interface ScreeningValues {
+  screening_date: string;
+
+  fms_deep_squat?: number;
+  fms_hurdle_step?: number;
+  fms_inline_lunge?: number;
+  fms_shoulder_mobility?: number;
+  fms_active_slr?: number;
+  fms_trunk_stability?: number;
+  fms_rotary_stability?: number;
+
+  ybt_leg_length?: number;
+  ybt_anterior_left?: number;
+  ybt_anterior_right?: number;
+  ybt_posteromedial_left?: number;
+  ybt_posteromedial_right?: number;
+  ybt_posterolateral_left?: number;
+  ybt_posterolateral_right?: number;
+
+  sit_and_reach_cm?: number;
+
+  slh_left_cm?: number;
+  slh_right_cm?: number;
+
+  cmj_height_cm?: number;
+  cmj_peak_power_w?: number;
+  cmj_relative_power?: number;
+
+  notes?: string;
+}
+
+function calcFmsTotal(v: Record<string, number | undefined>): number | null {
+  const scores = [
+    v.fms_deep_squat,
+    v.fms_hurdle_step,
+    v.fms_inline_lunge,
+    v.fms_shoulder_mobility,
+    v.fms_active_slr,
+    v.fms_trunk_stability,
+    v.fms_rotary_stability,
+  ].filter((s): s is number => s !== undefined);
+  if (scores.length === 0) return null;
+  return scores.reduce((sum, s) => sum + s, 0);
+}
+
+function calcSlhRatio(v: Record<string, number | undefined>): number | null {
+  const left = v.slh_left_cm;
+  const right = v.slh_right_cm;
+  if (left === undefined || right === undefined || left === 0) return null;
+  return Math.round((Math.min(left, right) / Math.max(left, right)) * 100);
+}
+
+function calcYbtComposite(directions: (number | undefined)[]): number | null {
+  const vals = directions.filter((d): d is number => d !== undefined);
+  if (vals.length === 0 || vals.some((v) => v === 0)) return null;
+  const sum = vals.reduce((a, b) => a + b, 0);
+  return Math.round((sum / (vals.length * 3)) * 100);
+}
+
+export async function createScreening(
+  athleteId: string,
+  values: ScreeningValues
+): Promise<PhysicalScreening | null> {
+  const supabase = createClient();
+  const { data } = await supabase
+    .from("physical_screenings")
+    .insert({
+      athlete_id: athleteId,
+      screening_date: values.screening_date,
+      notes: values.notes ?? null,
+
+      fms_deep_squat: values.fms_deep_squat ?? null,
+      fms_hurdle_step: values.fms_hurdle_step ?? null,
+      fms_inline_lunge: values.fms_inline_lunge ?? null,
+      fms_shoulder_mobility: values.fms_shoulder_mobility ?? null,
+      fms_active_slr: values.fms_active_slr ?? null,
+      fms_trunk_stability: values.fms_trunk_stability ?? null,
+      fms_rotary_stability: values.fms_rotary_stability ?? null,
+      fms_total: calcFmsTotal(values as unknown as Record<string, number | undefined>),
+
+      ybt_leg_length: values.ybt_leg_length ?? null,
+      ybt_anterior_left: values.ybt_anterior_left ?? null,
+      ybt_anterior_right: values.ybt_anterior_right ?? null,
+      ybt_posteromedial_left: values.ybt_posteromedial_left ?? null,
+      ybt_posteromedial_right: values.ybt_posteromedial_right ?? null,
+      ybt_posterolateral_left: values.ybt_posterolateral_left ?? null,
+      ybt_posterolateral_right: values.ybt_posterolateral_right ?? null,
+      ybt_composite_left: values.ybt_anterior_left !== undefined && values.ybt_posteromedial_left !== undefined && values.ybt_posterolateral_left !== undefined
+        ? calcYbtComposite([values.ybt_anterior_left, values.ybt_posteromedial_left, values.ybt_posterolateral_left])
+        : null,
+      ybt_composite_right: values.ybt_anterior_right !== undefined && values.ybt_posteromedial_right !== undefined && values.ybt_posterolateral_right !== undefined
+        ? calcYbtComposite([values.ybt_anterior_right, values.ybt_posteromedial_right, values.ybt_posterolateral_right])
+        : null,
+
+      sit_and_reach_cm: values.sit_and_reach_cm ?? null,
+
+      slh_left_cm: values.slh_left_cm ?? null,
+      slh_right_cm: values.slh_right_cm ?? null,
+      slh_ratio: calcSlhRatio(values as unknown as Record<string, number | undefined>),
+
+      cmj_height_cm: values.cmj_height_cm ?? null,
+      cmj_peak_power_w: values.cmj_peak_power_w ?? null,
+      cmj_relative_power: values.cmj_relative_power ?? null,
+    })
+    .select()
+    .single();
+  return data;
+}
+
+export async function deleteScreening(id: string): Promise<void> {
+  const supabase = createClient();
+  await supabase.from("physical_screenings").delete().eq("id", id);
+}

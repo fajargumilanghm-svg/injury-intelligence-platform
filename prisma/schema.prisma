@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  athlete
+  coach
+  physiotherapist
+  sport_scientist
+  administrator
+}
+
+model UserProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  email     String   @unique
+  fullName  String?  @map("full_name")
+  role      UserRole @default(athlete)
+  avatarUrl String?  @map("avatar_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("user_profiles")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  title     String
+  message   String
+  type      NotificationType @default(info)
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  info
+  warning
+  success
+  error
+}
