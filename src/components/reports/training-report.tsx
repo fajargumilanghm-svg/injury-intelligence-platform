@@ -9,8 +9,7 @@ import { Loader2, Download, Printer, Dumbbell, Gauge, Timer, Activity, TrendingU
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from "recharts";
 
 export function TrainingReport() {
-  const { profile } = useAuth();
-  const athleteId = profile?.id;
+  const { athleteId } = useAuth();
   const [data, setData] = useState<Awaited<ReturnType<typeof getTrainingReportData>> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fromDate, setFromDate] = useState(() => {

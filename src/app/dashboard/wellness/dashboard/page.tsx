@@ -7,8 +7,7 @@ import Link from "next/link";
 import { ClipboardList, BarChart3 } from "lucide-react";
 
 export default function WellnessDashboardPage() {
-  const { profile } = useAuth();
-  const athleteId = profile?.id;
+  const { athleteId } = useAuth();
 
   if (!athleteId) {
     return (

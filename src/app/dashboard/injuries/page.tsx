@@ -9,8 +9,7 @@ import type { InjuryRecord } from "@/types";
 import { Loader2, Stethoscope, Plus, X } from "lucide-react";
 
 export default function InjuriesPage() {
-  const { profile } = useAuth();
-  const athleteId = profile?.id;
+  const { athleteId } = useAuth();
   const [injuries, setInjuries] = useState<InjuryRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);

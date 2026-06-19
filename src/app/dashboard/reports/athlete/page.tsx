@@ -5,8 +5,7 @@ import { AthleteReport } from "@/components/reports/athlete-report";
 import { BarChart3 } from "lucide-react";
 
 export default function AthleteReportPage() {
-  const { profile } = useAuth();
-  const athleteId = profile?.id;
+  const { athleteId } = useAuth();
 
   if (!athleteId) {
     return <div className="text-center py-12 text-muted-foreground">Please set up your athlete profile first.</div>;

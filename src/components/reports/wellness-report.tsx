@@ -9,8 +9,7 @@ import { Loader2, Download, Printer, Heart, Activity, Zap, BrainCircuit, Smile, 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 
 export function WellnessReport() {
-  const { profile } = useAuth();
-  const athleteId = profile?.id;
+  const { athleteId } = useAuth();
   const [data, setData] = useState<Awaited<ReturnType<typeof getWellnessReportData>> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fromDate, setFromDate] = useState(() => {

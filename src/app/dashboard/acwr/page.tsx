@@ -7,8 +7,7 @@ import Link from "next/link";
 import { Dumbbell } from "lucide-react";
 
 export default function AcwrPage() {
-  const { profile } = useAuth();
-  const athleteId = profile?.id;
+  const { athleteId } = useAuth();
 
   if (!athleteId) {
     return (

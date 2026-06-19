@@ -9,8 +9,7 @@ import type { PhysicalScreening } from "@/types";
 import { Loader2, ClipboardList } from "lucide-react";
 
 export default function PhysicalScreeningPage() {
-  const { profile } = useAuth();
-  const athleteId = profile?.id;
+  const { athleteId } = useAuth();
   const [screenings, setScreenings] = useState<PhysicalScreening[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

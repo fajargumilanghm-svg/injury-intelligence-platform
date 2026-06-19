@@ -7,8 +7,7 @@ import Link from "next/link";
 import { ArrowLeft, Dumbbell } from "lucide-react";
 
 export default function TrainingAnalyticsPage() {
-  const { profile } = useAuth();
-  const athleteId = profile?.id;
+  const { athleteId } = useAuth();
 
   if (!athleteId) {
     return (

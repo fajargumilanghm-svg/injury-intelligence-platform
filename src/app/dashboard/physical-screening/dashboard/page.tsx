@@ -11,8 +11,7 @@ import Link from "next/link";
 import { ClipboardList } from "lucide-react";
 
 export default function PhysicalScreeningDashboardPage() {
-  const { profile } = useAuth();
-  const athleteId = profile?.id;
+  const { athleteId } = useAuth();
   const [screenings, setScreenings] = useState<PhysicalScreening[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 

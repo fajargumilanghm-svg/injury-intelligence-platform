@@ -5,8 +5,7 @@ import { AiDashboard } from "@/components/predictive-ai/ai-dashboard";
 import { BrainCircuit, Loader2, Sparkles } from "lucide-react";
 
 export default function PredictiveAiPage() {
-  const { profile } = useAuth();
-  const athleteId = profile?.id;
+  const { athleteId } = useAuth();
   const isPremium = true;
 
   if (!athleteId) {

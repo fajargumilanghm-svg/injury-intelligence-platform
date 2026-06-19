@@ -19,8 +19,7 @@ const reportTypes = [
 ];
 
 export default function DownloadsPage() {
-  const { profile } = useAuth();
-  const athleteId = profile?.id;
+  const { profile, athleteId } = useAuth();
   const athleteName = profile?.full_name ?? "Athlete";
   const [isLoading, setIsLoading] = useState(true);
   const [generating, setGenerating] = useState<string | null>(null);

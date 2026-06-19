@@ -13,8 +13,7 @@ import {
 } from "recharts";
 
 export default function TrainingPage() {
-  const { profile } = useAuth();
-  const athleteId = profile?.id;
+  const { athleteId } = useAuth();
   const [entries, setEntries] = useState<TrainingEntry[]>([]);
   const [trend, setTrend] = useState<{ date: string; load_score: number; duration: number; intensity: number }[]>([]);
   const [summary, setSummary] = useState<TrainingSummary | null>(null);

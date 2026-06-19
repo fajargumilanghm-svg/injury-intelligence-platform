@@ -7,8 +7,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export default function WellnessHistoryPage() {
-  const { profile } = useAuth();
-  const athleteId = profile?.id;
+  const { athleteId } = useAuth();
 
   if (!athleteId) {
     return (

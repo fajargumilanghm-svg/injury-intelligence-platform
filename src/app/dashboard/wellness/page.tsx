@@ -10,8 +10,7 @@ import { BarChart3 } from "lucide-react";
 import type { Athlete } from "@/types";
 
 export default function WellnessPage() {
-  const { profile } = useAuth();
-  const athleteId = profile?.id;
+  const { athleteId } = useAuth();
   const [athlete] = useState<Athlete | null>(null);
 
   if (!athleteId) {

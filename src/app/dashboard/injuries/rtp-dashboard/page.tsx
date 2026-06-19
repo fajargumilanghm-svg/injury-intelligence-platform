@@ -8,8 +8,7 @@ import Link from "next/link";
 import { Stethoscope } from "lucide-react";
 
 export default function RtpDashboardPage() {
-  const { profile } = useAuth();
-  const athleteId = profile?.id;
+  const { athleteId } = useAuth();
 
   if (!athleteId) {
     return <div className="text-center py-12 text-muted-foreground">Please set up your athlete profile first.</div>;

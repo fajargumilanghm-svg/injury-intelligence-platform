@@ -7,8 +7,7 @@ import Link from "next/link";
 import { BarChart3, Dumbbell, Heart } from "lucide-react";
 
 export default function RiskDashboardPage() {
-  const { profile } = useAuth();
-  const athleteId = profile?.id;
+  const { athleteId } = useAuth();
 
   if (!athleteId) {
     return (

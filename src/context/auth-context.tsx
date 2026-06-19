@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
+  athleteId: string | null;
   role: UserRole | null;
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
@@ -23,6 +24,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [athleteId, setAthleteId] = useState<string | null>(null);
   const [role, setRole] = useState<UserRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
@@ -41,9 +43,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       setProfile(userProfile);
       setRole(userProfile?.role ?? null);
+
+      const { data: athlete } = await supabase
+        .from("athletes")
+        .select("id")
+        .eq("user_id", currentUser.id)
+        .maybeSingle();
+      setAthleteId(athlete?.id ?? null);
     } else {
       setProfile(null);
       setRole(null);
+      setAthleteId(null);
     }
   }, [supabase]);
 
@@ -63,6 +73,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         setProfile(null);
         setRole(null);
+        setAthleteId(null);
       }
     });
 
@@ -124,6 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         profile,
+        athleteId,
         role,
         isLoading,
         signIn,
