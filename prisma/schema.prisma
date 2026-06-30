@@ -143,7 +143,7 @@ model Athlete {
 model Injury {
   id                   String          @id @default(uuid())
   athleteId            String          @map("athlete_id")
-  injuryDate           DateTime        @map("injury_date")
+  injuryDate           DateTime        @map("injury_date") @db.Date
   injuryType           String          @map("injury_type")
   bodyPart             String          @map("body_part")
   severity             InjurySeverity
@@ -153,9 +153,9 @@ model Injury {
   status               InjuryStatus    @default(active)
   estimatedRecoveryDays Int?           @map("estimated_recovery_days")
   actualRecoveryDays   Int?            @map("actual_recovery_days")
-  expectedReturnDate   DateTime?       @map("expected_return_date")
-  actualReturnDate     DateTime?       @map("actual_return_date")
-  returnToPlayDate     DateTime?       @map("return_to_play_date")
+  expectedReturnDate   DateTime?       @map("expected_return_date") @db.Date
+  actualReturnDate     DateTime?       @map("actual_return_date") @db.Date
+  returnToPlayDate     DateTime?       @map("return_to_play_date") @db.Date
   treatmentNotes       String?         @map("treatment_notes")
   createdAt            DateTime        @default(now()) @map("created_at")
   updatedAt            DateTime        @updatedAt @map("updated_at")
@@ -170,7 +170,7 @@ model Injury {
 model RecoveryMilestone {
   id            String        @id @default(uuid())
   injuryId      String        @map("injury_id")
-  milestoneDate DateTime      @map("milestone_date")
+  milestoneDate DateTime      @map("milestone_date") @db.Date
   milestoneType MilestoneType @map("milestone_type")
   description   String
   completed     Boolean       @default(false)
@@ -187,8 +187,8 @@ model RtpPhase {
   phaseNumber    Int            @map("phase_number")
   phaseName      String         @map("phase_name")
   description    String
-  startDate      DateTime?      @map("start_date")
-  completionDate DateTime?      @map("completion_date")
+  startDate      DateTime?      @map("start_date") @db.Date
+  completionDate DateTime?      @map("completion_date") @db.Date
   status         RtpPhaseStatus @default(pending)
   createdAt      DateTime       @default(now()) @map("created_at")
 
@@ -201,7 +201,7 @@ model RtpPhase {
 model TrainingEntry {
   id              String       @id @default(uuid())
   athleteId       String       @map("athlete_id")
-  trainingDate    DateTime     @map("training_date")
+  trainingDate    DateTime     @map("training_date") @db.Date
   trainingType    TrainingType @map("training_type")
   durationMinutes Int          @map("duration_minutes")
   intensityRpe    Int          @map("intensity_rpe")
@@ -234,7 +234,7 @@ model WellnessEntry {
 model PhysicalScreening {
   id                    String   @id @default(uuid())
   athleteId             String   @map("athlete_id")
-  screeningDate         DateTime @map("screening_date")
+  screeningDate         DateTime @map("screening_date") @db.Date
   notes                 String?
   createdAt             DateTime @default(now()) @map("created_at")
   fmsDeepSquat          Int?     @map("fms_deep_squat")
