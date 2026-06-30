@@ -2,27 +2,28 @@
 
 import { createClient } from "@/lib/supabase/client";
 import type { PhysicalScreening } from "@/types";
+import { handleData, handleSingle, handleError } from "./helpers";
 
 export async function getScreenings(athleteId: string): Promise<PhysicalScreening[]> {
   const supabase = createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("physical_screenings")
     .select("*")
     .eq("athlete_id", athleteId)
     .order("screening_date", { ascending: false });
-  return data ?? [];
+  return handleData<PhysicalScreening>(data, error, "physicalScreening.getAll");
 }
 
 export async function getLatestScreening(athleteId: string): Promise<PhysicalScreening | null> {
   const supabase = createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("physical_screenings")
     .select("*")
     .eq("athlete_id", athleteId)
     .order("screening_date", { ascending: false })
     .limit(1)
     .single();
-  return data;
+  return handleSingle<PhysicalScreening>(data, error, "physicalScreening.getLatest");
 }
 
 export interface ScreeningValues {
@@ -89,7 +90,7 @@ export async function createScreening(
   values: ScreeningValues
 ): Promise<PhysicalScreening | null> {
   const supabase = createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("physical_screenings")
     .insert({
       athlete_id: athleteId,
@@ -131,10 +132,11 @@ export async function createScreening(
     })
     .select()
     .single();
-  return data;
+  return handleSingle<PhysicalScreening>(data, error, "physicalScreening.create");
 }
 
 export async function deleteScreening(id: string): Promise<void> {
   const supabase = createClient();
-  await supabase.from("physical_screenings").delete().eq("id", id);
+  const { error } = await supabase.from("physical_screenings").delete().eq("id", id);
+  handleError(error, "physicalScreening.delete");
 }

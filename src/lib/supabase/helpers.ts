@@ -1,17 +1,29 @@
 import type { PostgrestError } from "@supabase/supabase-js";
 
-export function handleError(error: PostgrestError | null, context: string) {
-  if (error) {
-    console.error(`[Supabase Error] ${context}:`, error.message, error.details, error.hint);
+export class SupabaseError extends Error {
+  constructor(
+    message: string,
+    public context: string,
+    public originalError?: any
+  ) {
+    super(`[${context}] ${message}`);
+    this.name = 'SupabaseError';
   }
 }
 
-export function handleData<T>(data: T | null, error: PostgrestError | null, context: string): T[] {
-  handleError(error, context);
-  return (data ?? []) as T[];
+export function handleError(error: any, context: string): void {
+  if (error) {
+    console.error(`Supabase error in ${context}:`, error);
+    throw new SupabaseError(error.message || 'Unknown error', context, error);
+  }
 }
 
-export function handleSingle<T>(data: T | null, error: PostgrestError | null, context: string): T | null {
+export function handleData<T>(data: any, error: any, context: string): T[] {
   handleError(error, context);
-  return data;
+  return (data as T[]) ?? [];
+}
+
+export function handleSingle<T>(data: any, error: any, context: string): T | null {
+  handleError(error, context);
+  return (data as T) ?? null;
 }

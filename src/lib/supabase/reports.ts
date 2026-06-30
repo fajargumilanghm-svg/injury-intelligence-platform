@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import type { WellnessEntry, TrainingEntry, InjuryRecord, Athlete } from "@/types";
+import { handleData, handleSingle, handleError } from "./helpers";
 
 export interface AthleteReportData {
   athlete: Athlete | null;
@@ -33,6 +34,11 @@ export async function getAthleteReportData(athleteId: string, fromDate?: string,
       .eq("athlete_id", athleteId)
       .order("injury_date", { ascending: false }),
   ]);
+
+  handleError(athleteRes.error, "reports.getAthleteReportData.athlete");
+  handleError(wellnessRes.error, "reports.getAthleteReportData.wellness");
+  handleError(trainingRes.error, "reports.getAthleteReportData.training");
+  handleError(injuriesRes.error, "reports.getAthleteReportData.injuries");
 
   const wellness = wellnessRes.data ?? [];
   const training = trainingRes.data ?? [];
@@ -76,19 +82,23 @@ export interface TeamReportData {
 export async function getTeamReportData(fromDate?: string, toDate?: string): Promise<TeamReportData> {
   const supabase = createClient();
 
-  const { data: athletes } = await supabase.from("athletes").select("*").order("full_name");
-  const { data: allInjuries } = await supabase.from("injuries").select("*").order("injury_date", { ascending: false });
+  const { data: athletes, error: athletesError } = await supabase.from("athletes").select("*").order("full_name");
+  handleError(athletesError, "reports.getTeamReportData.athletes");
+  const { data: allInjuries, error: injuriesError } = await supabase.from("injuries").select("*").order("injury_date", { ascending: false });
+  handleError(injuriesError, "reports.getTeamReportData.injuries");
   const nameMap = new Map((athletes ?? []).map((a) => [a.id, a.full_name]));
-  const { data: wellnessData } = await supabase
+  const { data: wellnessData, error: wellnessError } = await supabase
     .from("wellness_entries")
     .select("wellness_score")
     .gte("submitted_at", fromDate ?? "2000-01-01")
     .lte("submitted_at", toDate ?? "2099-12-31");
-  const { data: trainingData } = await supabase
+  handleError(wellnessError, "reports.getTeamReportData.wellness");
+  const { data: trainingData, error: trainingError } = await supabase
     .from("training_entries")
     .select("load_score, athlete_id, training_date")
     .gte("training_date", fromDate ?? "2000-01-01")
     .lte("training_date", toDate ?? "2099-12-31");
+  handleError(trainingError, "reports.getTeamReportData.training");
 
   const injuries = allInjuries ?? [];
 
@@ -141,12 +151,12 @@ export interface InjuryReportData {
 
 export async function getInjuryReportData(fromDate?: string, toDate?: string): Promise<InjuryReportData> {
   const supabase = createClient();
-  const { data: injuries } = await supabase
+  const { data: injuries, error } = await supabase
     .from("injuries")
     .select("*")
     .order("injury_date", { ascending: false });
 
-  const all = injuries ?? [];
+  const all = handleData<InjuryRecord>(injuries ?? [], error, "reports.getInjuryReportData");
 
   const byType = aggregateField(all, "injury_type");
   const byBodyPart = aggregateField(all, "body_part");
@@ -170,10 +180,10 @@ export async function getInjuryReportData(fromDate?: string, toDate?: string): P
   };
 }
 
-function aggregateField(data: Record<string, unknown>[], field: string): { name: string; count: number }[] {
+function aggregateField(data: object[], field: string): { name: string; count: number }[] {
   const map = new Map<string, number>();
   data.forEach((item) => {
-    const val = String(item[field] ?? "Unknown");
+    const val = String((item as Record<string, unknown>)[field] ?? "Unknown");
     map.set(val, (map.get(val) ?? 0) + 1);
   });
   return Array.from(map.entries())
@@ -196,7 +206,7 @@ export interface WellnessReportData {
 
 export async function getWellnessReportData(athleteId: string, fromDate?: string, toDate?: string): Promise<WellnessReportData> {
   const supabase = createClient();
-  const { data: entries } = await supabase
+  const { data: entries, error } = await supabase
     .from("wellness_entries")
     .select("*")
     .eq("athlete_id", athleteId)
@@ -204,7 +214,7 @@ export async function getWellnessReportData(athleteId: string, fromDate?: string
     .lte("submitted_at", toDate ?? "2099-12-31")
     .order("submitted_at", { ascending: false });
 
-  const all = entries ?? [];
+  const all = handleData<WellnessEntry>(entries ?? [], error, "reports.getWellnessReportData");
 
   const avg = (key: keyof WellnessEntry) => {
     const vals = all.map((e) => e[key] as number).filter((v) => v !== null && v !== undefined);
@@ -238,7 +248,7 @@ export interface TrainingReportData {
 
 export async function getTrainingReportData(athleteId: string, fromDate?: string, toDate?: string): Promise<TrainingReportData> {
   const supabase = createClient();
-  const { data: entries } = await supabase
+  const { data: entries, error } = await supabase
     .from("training_entries")
     .select("*")
     .eq("athlete_id", athleteId)
@@ -246,7 +256,7 @@ export async function getTrainingReportData(athleteId: string, fromDate?: string
     .lte("training_date", toDate ?? "2099-12-31")
     .order("training_date", { ascending: false });
 
-  const all = entries ?? [];
+  const all = handleData<TrainingEntry>(entries ?? [], error, "reports.getTrainingReportData");
   const totalLoad = all.reduce((s, t) => s + t.load_score, 0);
   const avgDuration = all.length > 0 ? Math.round(all.reduce((s, t) => s + t.duration_minutes, 0) / all.length) : null;
   const avgIntensity = all.length > 0 ? Math.round((all.reduce((s, t) => s + t.intensity_rpe, 0) / all.length) * 10) / 10 : null;

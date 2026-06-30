@@ -2,23 +2,24 @@
 
 import { createClient } from "@/lib/supabase/client";
 import type { InjuryRecord, InjurySeverity, InjuryStatus, InjuryMechanism, InjurySide, RecoveryMilestone, MilestoneType, RtpPhase, RtpPhaseStatus } from "@/types";
+import { handleData, handleSingle, handleError } from "./helpers";
 
 // ─── Injuries ───────────────────────────────────────────────
 
 export async function getInjuries(athleteId: string): Promise<InjuryRecord[]> {
   const supabase = createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("injuries")
     .select("*")
     .eq("athlete_id", athleteId)
     .order("injury_date", { ascending: false });
-  return data ?? [];
+  return handleData<InjuryRecord>(data, error, "injuries.getAll");
 }
 
 export async function getInjury(id: string): Promise<InjuryRecord | null> {
   const supabase = createClient();
-  const { data } = await supabase.from("injuries").select("*").eq("id", id).single();
-  return data;
+  const { data, error } = await supabase.from("injuries").select("*").eq("id", id).single();
+  return handleSingle<InjuryRecord>(data, error, "injuries.get");
 }
 
 export interface InjuryValues {
@@ -43,7 +44,7 @@ export async function createInjury(
   values: InjuryValues
 ): Promise<InjuryRecord | null> {
   const supabase = createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("injuries")
     .insert({
       athlete_id: athleteId,
@@ -64,7 +65,7 @@ export async function createInjury(
     })
     .select()
     .single();
-  return data;
+  return handleSingle<InjuryRecord>(data, error, "injuries.create");
 }
 
 export async function updateInjury(
@@ -72,30 +73,31 @@ export async function updateInjury(
   values: Partial<InjuryValues>
 ): Promise<InjuryRecord | null> {
   const supabase = createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("injuries")
     .update(values)
     .eq("id", id)
     .select()
     .single();
-  return data;
+  return handleSingle<InjuryRecord>(data, error, "injuries.update");
 }
 
 export async function deleteInjury(id: string): Promise<void> {
   const supabase = createClient();
-  await supabase.from("injuries").delete().eq("id", id);
+  const { error } = await supabase.from("injuries").delete().eq("id", id);
+  handleError(error, "injuries.delete");
 }
 
 // ─── Recovery Milestones ────────────────────────────────────
 
 export async function getMilestones(injuryId: string): Promise<RecoveryMilestone[]> {
   const supabase = createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("recovery_milestones")
     .select("*")
     .eq("injury_id", injuryId)
     .order("milestone_date", { ascending: true });
-  return data ?? [];
+  return handleData<RecoveryMilestone>(data, error, "injuries.getMilestones");
 }
 
 export interface MilestoneValues {
@@ -110,7 +112,7 @@ export async function createMilestone(
   values: MilestoneValues
 ): Promise<RecoveryMilestone | null> {
   const supabase = createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("recovery_milestones")
     .insert({
       injury_id: injuryId,
@@ -121,7 +123,7 @@ export async function createMilestone(
     })
     .select()
     .single();
-  return data;
+  return handleSingle<RecoveryMilestone>(data, error, "injuries.createMilestone");
 }
 
 export async function updateMilestone(
@@ -129,30 +131,31 @@ export async function updateMilestone(
   values: Partial<MilestoneValues>
 ): Promise<RecoveryMilestone | null> {
   const supabase = createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("recovery_milestones")
     .update(values)
     .eq("id", id)
     .select()
     .single();
-  return data;
+  return handleSingle<RecoveryMilestone>(data, error, "injuries.updateMilestone");
 }
 
 export async function deleteMilestone(id: string): Promise<void> {
   const supabase = createClient();
-  await supabase.from("recovery_milestones").delete().eq("id", id);
+  const { error } = await supabase.from("recovery_milestones").delete().eq("id", id);
+  handleError(error, "injuries.deleteMilestone");
 }
 
 // ─── Return to Play Phases ──────────────────────────────────
 
 export async function getRtpPhases(injuryId: string): Promise<RtpPhase[]> {
   const supabase = createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("rtp_phases")
     .select("*")
     .eq("injury_id", injuryId)
     .order("phase_number", { ascending: true });
-  return data ?? [];
+  return handleData<RtpPhase>(data, error, "injuries.getRtpPhases");
 }
 
 export interface RtpPhaseValues {
@@ -169,7 +172,7 @@ export async function upsertRtpPhase(
   values: RtpPhaseValues
 ): Promise<RtpPhase | null> {
   const supabase = createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("rtp_phases")
     .upsert({
       injury_id: injuryId,
@@ -182,7 +185,7 @@ export async function upsertRtpPhase(
     }, { onConflict: "injury_id,phase_number" })
     .select()
     .single();
-  return data;
+  return handleSingle<RtpPhase>(data, error, "injuries.upsertRtpPhase");
 }
 
 export async function initializeRtpPhases(injuryId: string): Promise<void> {
@@ -197,5 +200,6 @@ export async function initializeRtpPhases(injuryId: string): Promise<void> {
     completion_date: null,
     status: "pending" as RtpPhaseStatus,
   }));
-  await supabase.from("rtp_phases").upsert(phases, { onConflict: "injury_id,phase_number" });
+  const { error } = await supabase.from("rtp_phases").upsert(phases, { onConflict: "injury_id,phase_number" });
+  handleError(error, "injuries.initializeRtpPhases");
 }

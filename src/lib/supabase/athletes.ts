@@ -2,24 +2,25 @@
 
 import { createClient } from "@/lib/supabase/client";
 import type { Athlete } from "@/types";
+import { handleData, handleSingle, handleError } from "./helpers";
 
 export async function getAthletes(): Promise<Athlete[]> {
   const supabase = createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("athletes")
     .select("*")
     .order("created_at", { ascending: false });
-  return data ?? [];
+  return handleData<Athlete>(data, error, "athletes.getAll");
 }
 
 export async function getAthlete(id: string): Promise<Athlete | null> {
   const supabase = createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("athletes")
     .select("*")
     .eq("id", id)
     .single();
-  return data;
+  return handleSingle<Athlete>(data, error, "athletes.get");
 }
 
 export async function createAthlete(
@@ -27,12 +28,12 @@ export async function createAthlete(
 ): Promise<Athlete | null> {
   const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("athletes")
     .insert({ ...values, user_id: user?.id ?? null })
     .select()
     .single();
-  return data;
+  return handleSingle<Athlete>(data, error, "athletes.create");
 }
 
 export async function updateAthlete(
@@ -40,16 +41,17 @@ export async function updateAthlete(
   values: Partial<Omit<Athlete, "id" | "created_at" | "updated_at">>
 ): Promise<Athlete | null> {
   const supabase = createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("athletes")
     .update(values)
     .eq("id", id)
     .select()
     .single();
-  return data;
+  return handleSingle<Athlete>(data, error, "athletes.update");
 }
 
 export async function deleteAthlete(id: string): Promise<void> {
   const supabase = createClient();
-  await supabase.from("athletes").delete().eq("id", id);
+  const { error } = await supabase.from("athletes").delete().eq("id", id);
+  handleError(error, "athletes.delete");
 }

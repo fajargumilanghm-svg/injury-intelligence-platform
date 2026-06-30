@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import type { TrainingEntry, TrainingType, TrainingSummary, AcwrDataPoint, AcwrAlert } from "@/types";
+import { handleData, handleSingle, handleError } from "./helpers";
 
 function calculateLoadScore(duration: number, intensity: number): number {
   return duration * intensity;
@@ -9,24 +10,24 @@ function calculateLoadScore(duration: number, intensity: number): number {
 
 export async function getTrainingEntries(athleteId: string): Promise<TrainingEntry[]> {
   const supabase = createClient();
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("training_entries")
     .select("*")
     .eq("athlete_id", athleteId)
     .order("training_date", { ascending: false });
-  return data ?? [];
+  return handleData<TrainingEntry>(data, error, "training.getAll");
 }
 
 export async function getTodayTraining(athleteId: string): Promise<TrainingEntry | null> {
   const supabase = createClient();
   const today = new Date().toISOString().split("T")[0];
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("training_entries")
     .select("*")
     .eq("athlete_id", athleteId)
     .eq("training_date", today)
     .single();
-  return data;
+  return handleSingle<TrainingEntry>(data, error, "training.getToday");
 }
 
 export async function submitTraining(
@@ -41,7 +42,7 @@ export async function submitTraining(
 ): Promise<TrainingEntry | null> {
   const supabase = createClient();
   const loadScore = calculateLoadScore(values.duration_minutes, values.intensity_rpe);
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("training_entries")
     .insert({
       athlete_id: athleteId,
@@ -54,25 +55,27 @@ export async function submitTraining(
     })
     .select()
     .single();
-  return data;
+  return handleSingle<TrainingEntry>(data, error, "training.submit");
 }
 
 export async function deleteTraining(id: string): Promise<void> {
   const supabase = createClient();
-  await supabase.from("training_entries").delete().eq("id", id);
+  const { error } = await supabase.from("training_entries").delete().eq("id", id);
+  handleError(error, "training.delete");
 }
 
 export async function getTrainingTrend(athleteId: string, days = 30): Promise<{ date: string; load_score: number; duration: number; intensity: number }[]> {
   const supabase = createClient();
   const since = new Date();
   since.setDate(since.getDate() - days);
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("training_entries")
     .select("*")
     .eq("athlete_id", athleteId)
     .gte("training_date", since.toISOString().split("T")[0])
     .order("training_date", { ascending: true });
-  return (data ?? []).map((e: TrainingEntry) => ({
+  const entries = handleData<TrainingEntry>(data, error, "training.getTrend");
+  return entries.map((e) => ({
     date: new Date(e.training_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
     load_score: e.load_score,
     duration: e.duration_minutes,
@@ -135,13 +138,13 @@ export async function getAcwrTrend(athleteId: string, days = 60): Promise<AcwrDa
   const supabase = createClient();
   const since = new Date();
   since.setDate(since.getDate() - days);
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("training_entries")
     .select("*")
     .eq("athlete_id", athleteId)
     .gte("training_date", since.toISOString().split("T")[0])
     .order("training_date", { ascending: true });
-  const entries = data ?? [];
+  const entries = handleData<TrainingEntry>(data, error, "training.getAcwrTrend");
 
   const points: AcwrDataPoint[] = [];
   const dayMap = new Map<string, number>();

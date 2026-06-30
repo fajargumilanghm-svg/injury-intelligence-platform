@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import type { WellnessEntry, TrainingEntry } from "@/types";
+import { handleError } from "./helpers";
 
 export interface InjuryRiskResult {
   overall_risk: number;
@@ -47,7 +48,7 @@ export async function calculateInjuryRisk(
 ): Promise<InjuryRiskResult | null> {
   const supabase = createClient();
 
-  const [wellnessData, trainingData, athleteData] = await Promise.all([
+  const [wellnessRes, trainingRes, athleteRes] = await Promise.all([
     supabase
       .from("wellness_entries")
       .select("*")
@@ -66,9 +67,13 @@ export async function calculateInjuryRisk(
       .single(),
   ]);
 
-  const wellness: WellnessEntry[] = wellnessData.data ?? [];
-  const training: TrainingEntry[] = trainingData.data ?? [];
-  const athlete = athleteData.data;
+  handleError(wellnessRes.error, "injury-risk.wellness");
+  handleError(trainingRes.error, "injury-risk.training");
+  handleError(athleteRes.error, "injury-risk.athlete");
+
+  const wellness: WellnessEntry[] = wellnessRes.data ?? [];
+  const training: TrainingEntry[] = trainingRes.data ?? [];
+  const athlete = athleteRes.data;
 
   if (training.length === 0 && wellness.length === 0) return null;
 
