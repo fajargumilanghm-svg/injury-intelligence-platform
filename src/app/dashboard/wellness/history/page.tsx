@@ -11,8 +11,16 @@ export default function WellnessHistoryPage() {
 
   if (!athleteId) {
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground">Please set up your athlete profile first.</p>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4">
+          <h2 className="text-2xl font-semibold">Athlete Profile Required</h2>
+          <p className="text-muted-foreground">
+            You need an athlete profile to view this page.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Please contact your administrator or refresh the page after setting up your profile.
+          </p>
+        </div>
       </div>
     );
   }
