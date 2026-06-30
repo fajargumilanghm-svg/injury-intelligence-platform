@@ -15,6 +15,80 @@ enum UserRole {
   administrator
 }
 
+enum NotificationType {
+  info
+  warning
+  success
+  error
+}
+
+enum Gender {
+  male
+  female
+  other
+}
+
+enum DominantSide {
+  left
+  right
+  ambidextrous
+}
+
+enum TrainingType {
+  strength
+  cardio
+  endurance
+  agility
+  speed
+  flexibility
+  recovery
+  sport_specific
+  other
+}
+
+enum InjurySeverity {
+  minor
+  moderate
+  severe
+}
+
+enum InjuryStatus {
+  active
+  recovering
+  recovered
+  chronic
+}
+
+enum InjuryMechanism {
+  contact
+  non_contact
+  overuse
+}
+
+enum InjurySide {
+  left
+  right
+  bilateral
+  n_a @map("n/a")
+}
+
+enum MilestoneType {
+  medical
+  rehab
+  strength
+  proprioception
+  sport_specific
+  full_training
+  rtp_clearance
+  other
+}
+
+enum RtpPhaseStatus {
+  pending
+  in_progress
+  completed
+}
+
 model UserProfile {
   id        String   @id @default(uuid())
   userId    String   @unique @map("user_id")
@@ -29,21 +103,166 @@ model UserProfile {
 }
 
 model Notification {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
+  id        String           @id @default(uuid())
+  userId    String           @map("user_id")
   title     String
   message   String
   type      NotificationType @default(info)
-  read      Boolean  @default(false)
+  read      Boolean          @default(false)
   link      String?
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime         @default(now()) @map("created_at")
 
   @@map("notifications")
 }
 
-enum NotificationType {
-  info
-  warning
-  success
-  error
+model Athlete {
+  id                    String       @id @default(uuid())
+  fullName              String       @map("full_name")
+  age                   Int
+  gender                Gender
+  height                Decimal
+  weight                Decimal
+  sport                 String
+  playingPosition       String       @map("playing_position")
+  dominantSide          DominantSide @default(right) @map("dominant_side")
+  trainingExperience    String       @default("beginner") @map("training_experience")
+  previousInjuryHistory String?      @map("previous_injury_history")
+  avatarUrl             String?      @map("avatar_url")
+  userId                String?      @map("user_id")
+  createdAt             DateTime     @default(now()) @map("created_at")
+  updatedAt             DateTime     @updatedAt @map("updated_at")
+
+  injuries         Injury[]
+  trainingEntries  TrainingEntry[]
+  wellnessEntries  WellnessEntry[]
+  physicalScreenings PhysicalScreening[]
+
+  @@map("athletes")
+}
+
+model Injury {
+  id                   String          @id @default(uuid())
+  athleteId            String          @map("athlete_id")
+  injuryDate           DateTime        @map("injury_date")
+  injuryType           String          @map("injury_type")
+  bodyPart             String          @map("body_part")
+  severity             InjurySeverity
+  mechanism            InjuryMechanism?
+  side                 InjurySide      @default(n_a)
+  diagnosis            String?
+  status               InjuryStatus    @default(active)
+  estimatedRecoveryDays Int?           @map("estimated_recovery_days")
+  actualRecoveryDays   Int?            @map("actual_recovery_days")
+  expectedReturnDate   DateTime?       @map("expected_return_date")
+  actualReturnDate     DateTime?       @map("actual_return_date")
+  returnToPlayDate     DateTime?       @map("return_to_play_date")
+  treatmentNotes       String?         @map("treatment_notes")
+  createdAt            DateTime        @default(now()) @map("created_at")
+  updatedAt            DateTime        @updatedAt @map("updated_at")
+
+  athlete            Athlete            @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  recoveryMilestones RecoveryMilestone[]
+  rtpPhases          RtpPhase[]
+
+  @@map("injuries")
+}
+
+model RecoveryMilestone {
+  id            String        @id @default(uuid())
+  injuryId      String        @map("injury_id")
+  milestoneDate DateTime      @map("milestone_date")
+  milestoneType MilestoneType @map("milestone_type")
+  description   String
+  completed     Boolean       @default(false)
+  createdAt     DateTime      @default(now()) @map("created_at")
+
+  injury Injury @relation(fields: [injuryId], references: [id], onDelete: Cascade)
+
+  @@map("recovery_milestones")
+}
+
+model RtpPhase {
+  id             String         @id @default(uuid())
+  injuryId       String         @map("injury_id")
+  phaseNumber    Int            @map("phase_number")
+  phaseName      String         @map("phase_name")
+  description    String
+  startDate      DateTime?      @map("start_date")
+  completionDate DateTime?      @map("completion_date")
+  status         RtpPhaseStatus @default(pending)
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  injury Injury @relation(fields: [injuryId], references: [id], onDelete: Cascade)
+
+  @@unique([injuryId, phaseNumber])
+  @@map("rtp_phases")
+}
+
+model TrainingEntry {
+  id              String       @id @default(uuid())
+  athleteId       String       @map("athlete_id")
+  trainingDate    DateTime     @map("training_date")
+  trainingType    TrainingType @map("training_type")
+  durationMinutes Int          @map("duration_minutes")
+  intensityRpe    Int          @map("intensity_rpe")
+  loadScore       Decimal      @map("load_score")
+  notes           String?
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  athlete Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@map("training_entries")
+}
+
+model WellnessEntry {
+  id              String   @id @default(uuid())
+  athleteId       String   @map("athlete_id")
+  sleepQuality    Int      @map("sleep_quality")
+  fatigue         Int
+  muscleSoreness  Int      @map("muscle_soreness")
+  stressLevel     Int      @map("stress_level")
+  moodState       Int      @map("mood_state")
+  recoveryFeeling Int      @map("recovery_feeling")
+  wellnessScore   Decimal  @map("wellness_score")
+  submittedAt     DateTime @default(now()) @map("submitted_at")
+
+  athlete Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@map("wellness_entries")
+}
+
+model PhysicalScreening {
+  id                    String   @id @default(uuid())
+  athleteId             String   @map("athlete_id")
+  screeningDate         DateTime @map("screening_date")
+  notes                 String?
+  createdAt             DateTime @default(now()) @map("created_at")
+  fmsDeepSquat          Int?     @map("fms_deep_squat")
+  fmsHurdleStep         Int?     @map("fms_hurdle_step")
+  fmsInlineLunge        Int?     @map("fms_inline_lunge")
+  fmsShoulderMobility   Int?     @map("fms_shoulder_mobility")
+  fmsActiveSlr          Int?     @map("fms_active_slr")
+  fmsTrunkStability     Int?     @map("fms_trunk_stability")
+  fmsRotaryStability    Int?     @map("fms_rotary_stability")
+  fmsTotal              Int?     @map("fms_total")
+  ybtLegLength          Decimal? @map("ybt_leg_length")
+  ybtAnteriorLeft       Decimal? @map("ybt_anterior_left")
+  ybtAnteriorRight      Decimal? @map("ybt_anterior_right")
+  ybtPosteromedialLeft  Decimal? @map("ybt_posteromedial_left")
+  ybtPosteromedialRight Decimal? @map("ybt_posteromedial_right")
+  ybtPosterolateralLeft  Decimal? @map("ybt_posterolateral_left")
+  ybtPosterolateralRight Decimal? @map("ybt_posterolateral_right")
+  ybtCompositeLeft      Decimal? @map("ybt_composite_left")
+  ybtCompositeRight     Decimal? @map("ybt_composite_right")
+  sitAndReachCm         Decimal? @map("sit_and_reach_cm")
+  slhLeftCm             Decimal? @map("slh_left_cm")
+  slhRightCm            Decimal? @map("slh_right_cm")
+  slhRatio              Decimal? @map("slh_ratio")
+  cmjHeightCm           Decimal? @map("cmj_height_cm")
+  cmjPeakPowerW         Decimal? @map("cmj_peak_power_w")
+  cmjRelativePower      Decimal? @map("cmj_relative_power")
+
+  athlete Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@map("physical_screenings")
 }
