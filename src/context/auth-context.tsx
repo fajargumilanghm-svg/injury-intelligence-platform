@@ -49,7 +49,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .select("id")
         .eq("user_id", currentUser.id)
         .maybeSingle();
-      setAthleteId(athlete?.id ?? null);
+
+      if (!athlete) {
+        const { data: profile } = await supabase
+          .from("user_profiles")
+          .select("*")
+          .eq("user_id", currentUser.id)
+          .single();
+
+        if (profile) {
+          const { data: newAthlete, error: createError } = await supabase
+            .from("athletes")
+            .insert({
+              user_id: currentUser.id,
+              full_name: profile.full_name,
+              avatar_url: profile.avatar_url,
+              age: 0,
+              gender: "other",
+              height: 0,
+              weight: 0,
+              sport: "",
+              playing_position: "",
+            })
+            .select("id")
+            .single();
+
+          if (!createError && newAthlete) {
+            setAthleteId(newAthlete.id);
+          }
+        }
+      } else {
+        setAthleteId(athlete.id);
+      }
     } else {
       setProfile(null);
       setRole(null);
