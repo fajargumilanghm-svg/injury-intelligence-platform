@@ -11,7 +11,7 @@ export async function getScreenings(athleteId: string): Promise<PhysicalScreenin
     .select("*")
     .eq("athlete_id", athleteId)
     .order("screening_date", { ascending: false });
-  return handleData<PhysicalScreening>(data, error, "physicalScreening.getAll");
+  return handleData<PhysicalScreening>(data, error, "physical-screening.getAll");
 }
 
 export async function getLatestScreening(athleteId: string): Promise<PhysicalScreening | null> {
@@ -23,7 +23,7 @@ export async function getLatestScreening(athleteId: string): Promise<PhysicalScr
     .order("screening_date", { ascending: false })
     .limit(1)
     .single();
-  return handleSingle<PhysicalScreening>(data, error, "physicalScreening.getLatest");
+  return handleSingle<PhysicalScreening>(data, error, "physical-screening.getLatest");
 }
 
 export interface ScreeningValues {
@@ -132,11 +132,11 @@ export async function createScreening(
     })
     .select()
     .single();
-  return handleSingle<PhysicalScreening>(data, error, "physicalScreening.create");
+  return handleSingle<PhysicalScreening>(data, error, "physical-screening.create");
 }
 
 export async function deleteScreening(id: string): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase.from("physical_screenings").delete().eq("id", id);
-  handleError(error, "physicalScreening.delete");
+  handleError(error, "physical-screening.delete");
 }
