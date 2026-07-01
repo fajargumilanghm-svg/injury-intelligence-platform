@@ -1,83 +1,8 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { handleData, handleSingle, handleError } from "./helpers";
 import type { PredictiveAnalytics, WellnessEntry, TrainingEntry, Athlete } from "@/types";
-
-function sigmoid(x: number): number {
-  return 1 / (1 + Math.exp(-x));
-}
-
-function clampProb(p: number): number {
-  return Math.min(100, Math.max(0, Math.round(p * 100)));
-}
-
-function logisticRegression(
-  features: number[],
-  weights: number[],
-  bias: number
-): number {
-  const logit = features.reduce((sum, f, i) => sum + f * weights[i], bias);
-  return sigmoid(logit);
-}
-
-function randomForest(
-  features: number[],
-  nTrees: number,
-  noise: number
-): number {
-  const trees: number[] = [];
-  for (let t = 0; t < nTrees; t++) {
-    const offset = (Math.random() - 0.5) * noise;
-    const sampleSize = Math.floor(features.length * 0.8);
-    const sampled: number[] = [];
-    for (let i = 0; i < sampleSize; i++) {
-      sampled.push(features[Math.floor(Math.random() * features.length)]);
-    }
-    const avg = sampled.reduce((s, v) => s + v, 0) / sampled.length;
-    trees.push(sigmoid(avg + offset));
-  }
-  return trees.reduce((s, p) => s + p, 0) / trees.length;
-}
-
-function xgboost(
-  features: number[],
-  nEstimators: number,
-  learningRate: number
-): number {
-  let prediction = 0.5;
-  for (let e = 0; e < nEstimators; e++) {
-    const treeIdx = e % features.length;
-    const residual = 0.5 - prediction;
-    const leafValue = features[treeIdx] * residual * learningRate;
-    const gamma = 0.1;
-    const regularized = leafValue / (1 + gamma);
-    prediction += regularized;
-    prediction = sigmoid(prediction);
-  }
-  return prediction;
-}
-
-function extractFeatures(
-  parsed: {
-    wellness: number;
-    acwr: number;
-    fms: number | null;
-    injuryHistory: number;
-    trainingLoad: number;
-    age: number;
-    playingTime: number;
-  }
-): number[] {
-  return [
-    parsed.wellness / 100,
-    Math.min(parsed.acwr, 3) / 3,
-    parsed.fms !== null ? parsed.fms / 21 : 0.5,
-    parsed.injuryHistory / 100,
-    Math.min(parsed.trainingLoad, 2000) / 2000,
-    Math.min(parsed.age, 40) / 40,
-    Math.min(parsed.playingTime, 100) / 100,
-  ];
-}
 
 function computeInjuryHistoryScore(
   athlete: Athlete | null,
@@ -119,16 +44,37 @@ function computeRiskLevel(p: number): "low" | "moderate" | "high" | "very_high" 
   return "very_high";
 }
 
-function modelFeatureImportance(features: number[]): { feature: string; importance: number }[] {
-  const labels = [
-    "Wellness", "ACWR", "FMS Score", "Injury History",
-    "Training Load", "Age", "Playing Time",
+function calculateRiskScore(athlete: {
+  fatigue?: number;
+  sleep_quality?: number;
+  acute_chronic_ratio?: number;
+  training_load_trend?: number;
+  recent_injury_severity?: number;
+}): number {
+  const fatigue = athlete.fatigue ?? 5;
+  const sleep = athlete.sleep_quality ?? 5;
+  const acwr = athlete.acute_chronic_ratio ?? 1.0;
+  const trend = athlete.training_load_trend ?? 0;
+  const injuryPenalty = athlete.recent_injury_severity ?? 0;
+
+  let score = 0;
+  score += (fatigue / 10) * 25;
+  score += ((10 - sleep) / 10) * 20;
+  score += Math.max(0, (acwr - 1.0) / 1.5) * 30;
+  score += Math.max(0, trend / 100) * 10;
+  score += (injuryPenalty / 5) * 15;
+
+  return Math.round(Math.min(99, Math.max(1, score)));
+}
+
+function getFeatureImportance(): Array<{ feature: string; importance: number }> {
+  return [
+    { feature: "Acute:Chronic Ratio", importance: 30 },
+    { feature: "Fatigue Level", importance: 25 },
+    { feature: "Sleep Quality", importance: 20 },
+    { feature: "Recent Injury Severity", importance: 15 },
+    { feature: "Training Load Trend", importance: 10 },
   ];
-  const total = features.reduce((s, v) => s + v, 0) || 1;
-  return labels.map((label, i) => ({
-    feature: label,
-    importance: Math.round((features[i] / total) * 100),
-  }));
 }
 
 export async function getPredictiveAnalytics(
@@ -156,9 +102,13 @@ export async function getPredictiveAnalytics(
       .single(),
   ]);
 
-  const wellness: WellnessEntry[] = wellnessRes.data ?? [];
-  const training: TrainingEntry[] = trainingRes.data ?? [];
-  const athlete: Athlete | null = athleteRes.data ?? null;
+  handleError(wellnessRes.error, "getPredictiveAnalytics:wellness");
+  handleError(trainingRes.error, "getPredictiveAnalytics:training");
+  handleError(athleteRes.error, "getPredictiveAnalytics:athlete");
+
+  const wellness: WellnessEntry[] = handleData<WellnessEntry>(wellnessRes.data, null, "getPredictiveAnalytics:wellness");
+  const training: TrainingEntry[] = handleData<TrainingEntry>(trainingRes.data, null, "getPredictiveAnalytics:training");
+  const athlete: Athlete | null = handleSingle<Athlete>(athleteRes.data, null, "getPredictiveAnalytics:athlete");
 
   if (wellness.length === 0 && training.length === 0) return null;
 
@@ -166,6 +116,16 @@ export async function getPredictiveAnalytics(
     wellness.length > 0
       ? wellness.reduce((s, e) => s + e.wellness_score, 0) / wellness.length
       : 50;
+
+  const avgFatigue =
+    wellness.length > 0
+      ? wellness.reduce((s, e) => s + e.fatigue, 0) / wellness.length
+      : 5;
+
+  const avgSleep =
+    wellness.length > 0
+      ? wellness.reduce((s, e) => s + e.sleep_quality, 0) / wellness.length
+      : 5;
 
   const weekAgo = new Date(Date.now() - 7 * 86400000);
   const monthAgo = new Date(Date.now() - 28 * 86400000);
@@ -197,56 +157,27 @@ export async function getPredictiveAnalytics(
     playing_time_score: playingTimeScore,
   };
 
-  const features = extractFeatures({
-    wellness: avgWellness,
-    acwr,
-    fms: inputs.fms_total,
-    injuryHistory: injuryHistoryScore,
-    trainingLoad: avgTrainingLoad,
-    age: athlete?.age ?? 25,
-    playingTime: playingTimeScore,
+  const riskScore = calculateRiskScore({
+    fatigue: Math.round(avgFatigue),
+    sleep_quality: Math.round(avgSleep),
+    acute_chronic_ratio: acwr,
+    training_load_trend: avgTrainingLoad,
+    recent_injury_severity: injuryHistoryScore,
   });
 
-  const logitWeights = [2.1, 1.8, -1.5, 2.5, 1.2, 0.6, 0.9];
-  const lr7 = logisticRegression(features, logitWeights, -2.0);
-  const lr14 = logisticRegression(features, logitWeights.map((w) => w * 1.15), -1.5);
-  const lr30 = logisticRegression(features, logitWeights.map((w) => w * 1.3), -1.0);
-
-  const rf7 = randomForest(features, 100, 0.15);
-  const rf14 = randomForest(features, 100, 0.2);
-  const rf30 = randomForest(features, 100, 0.25);
-
-  const xgb7 = xgboost(features, 50, 0.3);
-  const xgb14 = xgboost(features, 60, 0.35);
-  const xgb30 = xgboost(features, 70, 0.4);
-
-  const p7 = clampProb((lr7 + rf7 + xgb7) / 3);
-  const p14 = clampProb((lr14 + rf14 + xgb14) / 3);
-  const p30 = clampProb((lr30 + rf30 + xgb30) / 3);
+  const p7 = Math.round(Math.min(99, Math.max(1, riskScore)));
+  const p14 = Math.round(Math.min(99, Math.max(1, riskScore * 1.1)));
+  const p30 = Math.round(Math.min(99, Math.max(1, riskScore * 1.2)));
 
   return {
     inputs,
     models: [
       {
-        model_name: "Logistic Regression",
-        probability_7d: clampProb(lr7),
-        probability_14d: clampProb(lr14),
-        probability_30d: clampProb(lr30),
-        feature_importance: modelFeatureImportance(features.map((f, i) => f * logitWeights[i])),
-      },
-      {
-        model_name: "Random Forest",
-        probability_7d: clampProb(rf7),
-        probability_14d: clampProb(rf14),
-        probability_30d: clampProb(rf30),
-        feature_importance: modelFeatureImportance(features),
-      },
-      {
-        model_name: "XGBoost",
-        probability_7d: clampProb(xgb7),
-        probability_14d: clampProb(xgb14),
-        probability_30d: clampProb(xgb30),
-        feature_importance: modelFeatureImportance(features.map((f) => f * (1 + f))),
+        model_name: "Risk Analysis",
+        probability_7d: p7,
+        probability_14d: p14,
+        probability_30d: p30,
+        feature_importance: getFeatureImportance(),
       },
     ],
     ensemble: {

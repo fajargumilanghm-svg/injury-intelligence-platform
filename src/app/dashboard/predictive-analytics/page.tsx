@@ -30,9 +30,9 @@ export default function PredictiveAnalyticsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Predictive Injury Analytics</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Risk Analysis</h1>
         <p className="text-muted-foreground text-sm mt-1">
-          ML-powered injury prediction using Logistic Regression, Random Forest &amp; XGBoost
+          Rule-based injury risk assessment using athlete wellness and training data
         </p>
       </div>
 

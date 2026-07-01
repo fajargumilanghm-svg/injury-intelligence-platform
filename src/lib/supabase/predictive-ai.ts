@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { handleData, handleSingle, handleError } from "./helpers";
 import type { WellnessEntry, TrainingEntry } from "@/types";
 
 export interface AIPrediction {
@@ -33,9 +34,13 @@ export async function predictInjuryRisk(athleteId: string): Promise<AIPrediction
     supabase.from("athletes").select("*").eq("id", athleteId).single(),
   ]);
 
-  const wellness = (wellnessRes.data ?? []) as WellnessEntry[];
-  const training = (trainingRes.data ?? []) as TrainingEntry[];
-  const athlete = athleteRes.data;
+  handleError(wellnessRes.error, "predictInjuryRisk:wellness");
+  handleError(trainingRes.error, "predictInjuryRisk:training");
+  handleError(athleteRes.error, "predictInjuryRisk:athlete");
+
+  const wellness: WellnessEntry[] = handleData<WellnessEntry>(wellnessRes.data, null, "predictInjuryRisk:wellness");
+  const training: TrainingEntry[] = handleData<TrainingEntry>(trainingRes.data, null, "predictInjuryRisk:training");
+  const athlete = handleSingle<any>(athleteRes.data, null, "predictInjuryRisk:athlete");
 
   if (wellness.length === 0 && training.length === 0) return null;
 
@@ -113,8 +118,7 @@ export async function predictInjuryRisk(athleteId: string): Promise<AIPrediction
     acwrScore * weights.acwrImbalance +
     loadSpikeScore * weights.loadSpike;
 
-  const noise = (Math.random() - 0.5) * 6;
-  const riskScore = Math.round(Math.min(98, Math.max(2, rawScore + noise)));
+  const riskScore = Math.round(Math.min(98, Math.max(2, rawScore)));
 
   // ─── Risk Level ─────────────────────────────────────────
 
@@ -224,7 +228,7 @@ export async function predictInjuryRisk(athleteId: string): Promise<AIPrediction
     const weekLabel = weekDate.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
     const decay = Math.max(0, 1 - w * 0.15);
-    const projected = Math.round(Math.min(98, Math.max(3, riskScore * decay + (Math.random() - 0.5) * 15)));
+    const projected = Math.round(Math.min(98, Math.max(3, riskScore * decay)));
     const spread = Math.round(5 + w * 3);
 
     weeklyProjection.push({
@@ -250,7 +254,7 @@ export async function predictInjuryRisk(athleteId: string): Promise<AIPrediction
   if (acwr > 1.5) insights.push("ACWR exceeds safe threshold (1.5). Load management required.");
   if (avgWellness < 60) insights.push("Average wellness below 60 — consider recovery intervention.");
   if (avgSoreness > 7) insights.push("Muscle soreness consistently elevated above 7/10.");
-  if (avgSleep < 5) insights.push("Chronic low sleep quality (&lt;5/10) — significant risk factor.");
+  if (avgSleep < 5) insights.push("Chronic low sleep quality (<5/10) — significant risk factor.");
   if (loadTrend > 100) insights.push("Training load spiked more than 100 points in 3 days.");
 
   const recommendation = factors.sort((a, b) => b.impact - a.impact)[0]?.recommendation;

@@ -177,9 +177,9 @@ export function AnalyticsDashboard({ athleteId }: AnalyticsDashboardProps) {
 
       {/* Model Details Table */}
       <div className="rounded-xl border bg-card p-5">
-        <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
-          <Table className="h-4 w-4 text-primary" /> Model Predictions Detail
-        </h3>
+          <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
+            <Table className="h-4 w-4 text-primary" /> Risk Factor Analysis
+          </h3>
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
@@ -228,28 +228,18 @@ export function AnalyticsDashboard({ athleteId }: AnalyticsDashboardProps) {
         </div>
       </div>
 
-      {/* Model Methodology */}
+      {/* Methodology */}
       <div className="rounded-xl border bg-card p-5">
         <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
-          <ShieldAlert className="h-4 w-4 text-primary" /> Model Methodologies
+          <ShieldAlert className="h-4 w-4 text-primary" /> Scoring Methodology
         </h3>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-lg border bg-muted/30 p-3">
-            <p className="text-xs font-semibold mb-1">Logistic Regression</p>
-            <p className="text-[10px] text-muted-foreground">Linear decision boundary with sigmoid activation. Weights: Wellness 2.1, ACWR 1.8, FMS -1.5, Injury History 2.5, Load 1.2, Age 0.6, Playing Time 0.9.</p>
-          </div>
-          <div className="rounded-lg border bg-muted/30 p-3">
-            <p className="text-xs font-semibold mb-1">Random Forest</p>
-            <p className="text-[10px] text-muted-foreground">100 bootstrap-aggregated decision trees with random feature sampling at 80%. Each tree votes, final output averaged across ensemble.</p>
-          </div>
-          <div className="rounded-lg border bg-muted/30 p-3">
-            <p className="text-xs font-semibold mb-1">XGBoost</p>
-            <p className="text-[10px] text-muted-foreground">Gradient boosted trees with 50-70 estimators and learning rate 0.3-0.4. Sequential residual correction with L2 regularization (gamma=0.1).</p>
-          </div>
+        <div className="rounded-lg border bg-muted/30 p-3">
+          <p className="text-xs font-semibold mb-1">Risk Analysis</p>
+          <p className="text-[10px] text-muted-foreground">Weighted rule-based scoring using 5 factors: Acute:Chronic Ratio (30%), Fatigue Level (25%), Sleep Quality (20%), Recent Injury Severity (15%), Training Load Trend (10%). Scores are projected across 7, 14, and 30-day windows with deterministic adjustments.</p>
         </div>
         <div className="mt-3 rounded-lg bg-muted/50 px-3 py-2">
           <p className="text-[10px] text-muted-foreground">
-            <strong className="text-foreground">Note:</strong> This is a simulated ML engine for demonstration. All models use the same 7 inputs (Wellness, ACWR, FMS, Injury History, Training Load, Age, Playing Time) with different algorithmic approaches. Replace with actual ML serving when real training data is available.
+            <strong className="text-foreground">Note:</strong> This is a rule-based risk assessment engine. Scores are calculated deterministically from athlete wellness and training data without stochastic or machine learning components.
           </p>
         </div>
       </div>

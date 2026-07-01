@@ -44,7 +44,7 @@ export function AiDashboard({ athleteId }: AiDashboardProps) {
       <div className="text-center py-16">
         <BrainCircuit className="mx-auto h-12 w-12 text-muted-foreground" />
         <h3 className="mt-4 text-lg font-semibold">Insufficient Data</h3>
-        <p className="text-sm text-muted-foreground">At least 7 days of wellness and training data required for AI prediction.</p>
+        <p className="text-sm text-muted-foreground">At least 7 days of wellness and training data required for risk prediction.</p>
       </div>
     );
   }
@@ -58,7 +58,7 @@ export function AiDashboard({ athleteId }: AiDashboardProps) {
             min={0}
             max={100}
             size={180}
-            label="AI Risk Score"
+            label="Risk Score"
             thresholds={[
               { label: "Low", min: 0, max: 29, color: "#22c55e" },
               { label: "Moderate", min: 29, max: 54, color: "#f59e0b" },
@@ -151,7 +151,7 @@ export function AiDashboard({ athleteId }: AiDashboardProps) {
 
         <div className="rounded-xl border bg-card p-5">
           <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
-            <Lightbulb className="h-4 w-4 text-primary" /> AI Insights & Recommendations
+            <Lightbulb className="h-4 w-4 text-primary" /> Insights & Recommendations
           </h3>
           <div className="space-y-2">
             {prediction.insights.map((insight, i) => (
@@ -179,7 +179,7 @@ export function AiDashboard({ athleteId }: AiDashboardProps) {
 
           <div className="mt-4 rounded-lg bg-muted/50 px-3 py-2">
             <p className="text-[10px] text-muted-foreground">
-              <strong className="text-foreground">AI Model:</strong> Weighted ensemble of 6 factors (Wellness Decline, Fatigue/Soreness, Sleep, Stress, ACWR Imbalance, Load Spike). Confidence based on data volume. Predictions are probabilistic — always validate with clinical assessment.
+              <strong className="text-foreground">Methodology:</strong> Weighted ensemble of 6 factors (Wellness Decline, Fatigue/Soreness, Sleep, Stress, ACWR Imbalance, Load Spike). Confidence based on data volume. Scores are deterministic — always validate with clinical assessment.
             </p>
           </div>
         </div>
