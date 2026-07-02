@@ -184,7 +184,7 @@ export function AnalyticsDashboard({ athleteId }: AnalyticsDashboardProps) {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b text-muted-foreground">
-                <th className="text-left py-2 pr-4 font-medium">Model</th>
+                <th className="text-left py-2 pr-4 font-medium">Method</th>
                 <th className="text-right px-2 py-2 font-medium">7-Day</th>
                 <th className="text-right px-2 py-2 font-medium">14-Day</th>
                 <th className="text-right px-2 py-2 font-medium">30-Day</th>

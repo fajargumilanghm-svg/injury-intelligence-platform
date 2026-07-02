@@ -10,7 +10,7 @@ export async function getAthletes(): Promise<Athlete[]> {
     .from("athletes")
     .select("*")
     .order("created_at", { ascending: false });
-  return handleData<Athlete>(data, error, "athletes.getAll");
+  return handleData<Athlete>(data, error, "athletes.get-all");
 }
 
 export async function getAthlete(id: string): Promise<Athlete | null> {

@@ -24,7 +24,7 @@ export async function getWellnessEntries(athleteId: string): Promise<WellnessEnt
     .select("*")
     .eq("athlete_id", athleteId)
     .order("submitted_at", { ascending: false });
-  return handleData<WellnessEntry>(data, error, "wellness.getAll");
+  return handleData<WellnessEntry>(data, error, "wellness.get-all");
 }
 
 export async function getTodayEntry(athleteId: string): Promise<WellnessEntry | null> {
@@ -37,7 +37,7 @@ export async function getTodayEntry(athleteId: string): Promise<WellnessEntry | 
     .gte("submitted_at", `${today}T00:00:00`)
     .lte("submitted_at", `${today}T23:59:59`)
     .single();
-  return handleSingle<WellnessEntry>(data, error, "wellness.getToday");
+  return handleSingle<WellnessEntry>(data, error, "wellness.get-today");
 }
 
 export async function submitWellness(
@@ -64,7 +64,7 @@ export async function getWellnessTrend(athleteId: string, days = 30): Promise<We
     .eq("athlete_id", athleteId)
     .gte("submitted_at", since.toISOString())
     .order("submitted_at", { ascending: true });
-  const entries = handleData<WellnessEntry>(data, error, "wellness.getTrend");
+  const entries = handleData<WellnessEntry>(data, error, "wellness.get-trend");
   return entries.map((e) => ({
     date: new Date(e.submitted_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
     wellness_score: e.wellness_score,

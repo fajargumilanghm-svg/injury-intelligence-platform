@@ -13,7 +13,7 @@ export async function getInjuries(athleteId: string): Promise<InjuryRecord[]> {
     .select("*")
     .eq("athlete_id", athleteId)
     .order("injury_date", { ascending: false });
-  return handleData<InjuryRecord>(data, error, "injuries.getAll");
+  return handleData<InjuryRecord>(data, error, "injuries.get-all");
 }
 
 export async function getInjury(id: string): Promise<InjuryRecord | null> {
@@ -97,7 +97,7 @@ export async function getMilestones(injuryId: string): Promise<RecoveryMilestone
     .select("*")
     .eq("injury_id", injuryId)
     .order("milestone_date", { ascending: true });
-  return handleData<RecoveryMilestone>(data, error, "injuries.getMilestones");
+  return handleData<RecoveryMilestone>(data, error, "injuries.get-milestones");
 }
 
 export interface MilestoneValues {
@@ -123,7 +123,7 @@ export async function createMilestone(
     })
     .select()
     .single();
-  return handleSingle<RecoveryMilestone>(data, error, "injuries.createMilestone");
+  return handleSingle<RecoveryMilestone>(data, error, "injuries.create-milestone");
 }
 
 export async function updateMilestone(
@@ -137,13 +137,13 @@ export async function updateMilestone(
     .eq("id", id)
     .select()
     .single();
-  return handleSingle<RecoveryMilestone>(data, error, "injuries.updateMilestone");
+  return handleSingle<RecoveryMilestone>(data, error, "injuries.update-milestone");
 }
 
 export async function deleteMilestone(id: string): Promise<void> {
   const supabase = createClient();
   const { error } = await supabase.from("recovery_milestones").delete().eq("id", id);
-  handleError(error, "injuries.deleteMilestone");
+  handleError(error, "injuries.delete-milestone");
 }
 
 // ─── Return to Play Phases ──────────────────────────────────
@@ -155,7 +155,7 @@ export async function getRtpPhases(injuryId: string): Promise<RtpPhase[]> {
     .select("*")
     .eq("injury_id", injuryId)
     .order("phase_number", { ascending: true });
-  return handleData<RtpPhase>(data, error, "injuries.getRtpPhases");
+  return handleData<RtpPhase>(data, error, "injuries.get-rtp-phases");
 }
 
 export interface RtpPhaseValues {
@@ -185,7 +185,7 @@ export async function upsertRtpPhase(
     }, { onConflict: "injury_id,phase_number" })
     .select()
     .single();
-  return handleSingle<RtpPhase>(data, error, "injuries.upsertRtpPhase");
+  return handleSingle<RtpPhase>(data, error, "injuries.upsert-rtp-phase");
 }
 
 export async function initializeRtpPhases(injuryId: string): Promise<void> {
@@ -201,5 +201,5 @@ export async function initializeRtpPhases(injuryId: string): Promise<void> {
     status: "pending" as RtpPhaseStatus,
   }));
   const { error } = await supabase.from("rtp_phases").upsert(phases, { onConflict: "injury_id,phase_number" });
-  handleError(error, "injuries.initializeRtpPhases");
+  handleError(error, "injuries.initialize-rtp-phases");
 }

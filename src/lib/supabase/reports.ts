@@ -35,10 +35,10 @@ export async function getAthleteReportData(athleteId: string, fromDate?: string,
       .order("injury_date", { ascending: false }),
   ]);
 
-  handleError(athleteRes.error, "reports.getAthleteReportData.athlete");
-  handleError(wellnessRes.error, "reports.getAthleteReportData.wellness");
-  handleError(trainingRes.error, "reports.getAthleteReportData.training");
-  handleError(injuriesRes.error, "reports.getAthleteReportData.injuries");
+  handleError(athleteRes.error, "reports.get-athlete-report-data.athlete");
+  handleError(wellnessRes.error, "reports.get-athlete-report-data.wellness");
+  handleError(trainingRes.error, "reports.get-athlete-report-data.training");
+  handleError(injuriesRes.error, "reports.get-athlete-report-data.injuries");
 
   const wellness = wellnessRes.data ?? [];
   const training = trainingRes.data ?? [];
@@ -83,22 +83,22 @@ export async function getTeamReportData(fromDate?: string, toDate?: string): Pro
   const supabase = createClient();
 
   const { data: athletes, error: athletesError } = await supabase.from("athletes").select("*").order("full_name");
-  handleError(athletesError, "reports.getTeamReportData.athletes");
+  handleError(athletesError, "reports.get-team-report-data.athletes");
   const { data: allInjuries, error: injuriesError } = await supabase.from("injuries").select("*").order("injury_date", { ascending: false });
-  handleError(injuriesError, "reports.getTeamReportData.injuries");
+  handleError(injuriesError, "reports.get-team-report-data.injuries");
   const nameMap = new Map((athletes ?? []).map((a) => [a.id, a.full_name]));
   const { data: wellnessData, error: wellnessError } = await supabase
     .from("wellness_entries")
     .select("wellness_score")
     .gte("submitted_at", fromDate ?? "2000-01-01")
     .lte("submitted_at", toDate ?? "2099-12-31");
-  handleError(wellnessError, "reports.getTeamReportData.wellness");
+  handleError(wellnessError, "reports.get-team-report-data.wellness");
   const { data: trainingData, error: trainingError } = await supabase
     .from("training_entries")
     .select("load_score, athlete_id, training_date")
     .gte("training_date", fromDate ?? "2000-01-01")
     .lte("training_date", toDate ?? "2099-12-31");
-  handleError(trainingError, "reports.getTeamReportData.training");
+  handleError(trainingError, "reports.get-team-report-data.training");
 
   const injuries = allInjuries ?? [];
 
@@ -156,7 +156,7 @@ export async function getInjuryReportData(fromDate?: string, toDate?: string): P
     .select("*")
     .order("injury_date", { ascending: false });
 
-  const all = handleData<InjuryRecord>(injuries ?? [], error, "reports.getInjuryReportData");
+  const all = handleData<InjuryRecord>(injuries ?? [], error, "reports.get-injury-report-data");
 
   const byType = aggregateField(all, "injury_type");
   const byBodyPart = aggregateField(all, "body_part");
@@ -214,7 +214,7 @@ export async function getWellnessReportData(athleteId: string, fromDate?: string
     .lte("submitted_at", toDate ?? "2099-12-31")
     .order("submitted_at", { ascending: false });
 
-  const all = handleData<WellnessEntry>(entries ?? [], error, "reports.getWellnessReportData");
+  const all = handleData<WellnessEntry>(entries ?? [], error, "reports.get-wellness-report-data");
 
   const avg = (key: keyof WellnessEntry) => {
     const vals = all.map((e) => e[key] as number).filter((v) => v !== null && v !== undefined);
@@ -256,7 +256,7 @@ export async function getTrainingReportData(athleteId: string, fromDate?: string
     .lte("training_date", toDate ?? "2099-12-31")
     .order("training_date", { ascending: false });
 
-  const all = handleData<TrainingEntry>(entries ?? [], error, "reports.getTrainingReportData");
+  const all = handleData<TrainingEntry>(entries ?? [], error, "reports.get-training-report-data");
   const totalLoad = all.reduce((s, t) => s + t.load_score, 0);
   const avgDuration = all.length > 0 ? Math.round(all.reduce((s, t) => s + t.duration_minutes, 0) / all.length) : null;
   const avgIntensity = all.length > 0 ? Math.round((all.reduce((s, t) => s + t.intensity_rpe, 0) / all.length) * 10) / 10 : null;

@@ -30,7 +30,7 @@ export default function PredictiveAiPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <BrainCircuit className="h-6 w-6 text-primary" />
-            Risk Analysis
+            Advanced Risk Analysis
             <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-semibold text-amber-700 ml-1">
               <Sparkles className="h-3 w-3" /> PREMIUM
             </span>

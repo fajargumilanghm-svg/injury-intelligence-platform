@@ -74,6 +74,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             .select("id")
             .single();
 
+          if (createError) {
+            console.error("[AuthContext] Failed to auto-create athlete:", createError);
+          }
           if (!createError && newAthlete) {
             setAthleteId(newAthlete.id);
           }

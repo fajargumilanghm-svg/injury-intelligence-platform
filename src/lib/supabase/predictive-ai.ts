@@ -34,13 +34,13 @@ export async function predictInjuryRisk(athleteId: string): Promise<AIPrediction
     supabase.from("athletes").select("*").eq("id", athleteId).single(),
   ]);
 
-  handleError(wellnessRes.error, "predictInjuryRisk:wellness");
-  handleError(trainingRes.error, "predictInjuryRisk:training");
-  handleError(athleteRes.error, "predictInjuryRisk:athlete");
+  handleError(wellnessRes.error, "predictive-ai.predict-injury-risk.wellness");
+  handleError(trainingRes.error, "predictive-ai.predict-injury-risk.training");
+  handleError(athleteRes.error, "predictive-ai.predict-injury-risk.athlete");
 
-  const wellness: WellnessEntry[] = handleData<WellnessEntry>(wellnessRes.data, null, "predictInjuryRisk:wellness");
-  const training: TrainingEntry[] = handleData<TrainingEntry>(trainingRes.data, null, "predictInjuryRisk:training");
-  const athlete = handleSingle<any>(athleteRes.data, null, "predictInjuryRisk:athlete");
+  const wellness: WellnessEntry[] = handleData<WellnessEntry>(wellnessRes.data, null, "predictive-ai.predict-injury-risk.wellness");
+  const training: TrainingEntry[] = handleData<TrainingEntry>(trainingRes.data, null, "predictive-ai.predict-injury-risk.training");
+  const athlete = handleSingle<any>(athleteRes.data, null, "predictive-ai.predict-injury-risk.athlete");
 
   if (wellness.length === 0 && training.length === 0) return null;
 

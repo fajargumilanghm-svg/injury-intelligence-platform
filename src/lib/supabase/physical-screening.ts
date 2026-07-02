@@ -11,7 +11,7 @@ export async function getScreenings(athleteId: string): Promise<PhysicalScreenin
     .select("*")
     .eq("athlete_id", athleteId)
     .order("screening_date", { ascending: false });
-  return handleData<PhysicalScreening>(data, error, "physical-screening.getAll");
+  return handleData<PhysicalScreening>(data, error, "physical-screening.get-all");
 }
 
 export async function getLatestScreening(athleteId: string): Promise<PhysicalScreening | null> {
@@ -23,7 +23,7 @@ export async function getLatestScreening(athleteId: string): Promise<PhysicalScr
     .order("screening_date", { ascending: false })
     .limit(1)
     .single();
-  return handleSingle<PhysicalScreening>(data, error, "physical-screening.getLatest");
+  return handleSingle<PhysicalScreening>(data, error, "physical-screening.get-latest");
 }
 
 export interface ScreeningValues {

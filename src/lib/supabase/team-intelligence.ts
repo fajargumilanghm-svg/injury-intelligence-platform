@@ -17,7 +17,7 @@ export interface TeamOverview {
 export async function getTeamAthletes(): Promise<Athlete[]> {
   const supabase = createClient();
   const { data, error } = await supabase.from("athletes").select("*").order("full_name");
-  return handleData<Athlete>(data, error, "team-intelligence.getTeamAthletes");
+  return handleData<Athlete>(data, error, "team-intelligence.get-team-athletes");
 }
 
 export async function getTeamOverview(): Promise<TeamOverview> {
@@ -28,9 +28,9 @@ export async function getTeamOverview(): Promise<TeamOverview> {
     supabase.from("wellness_entries").select("wellness_score, athlete_id"),
   ]);
 
-  handleError(athletesRes.error, "team-intelligence.getTeamOverview.athletes");
-  handleError(injuriesRes.error, "team-intelligence.getTeamOverview.injuries");
-  handleError(wellnessRes.error, "team-intelligence.getTeamOverview.wellness");
+  handleError(athletesRes.error, "team-intelligence.get-team-overview.athletes");
+  handleError(injuriesRes.error, "team-intelligence.get-team-overview.injuries");
+  handleError(wellnessRes.error, "team-intelligence.get-team-overview.wellness");
 
   const athletes = athletesRes.data ?? [];
   const activeInjuries = (injuriesRes.data ?? []).filter((i) => i.status === "active").length;
@@ -48,7 +48,7 @@ export async function getTeamOverview(): Promise<TeamOverview> {
     .from("training_entries")
     .select("load_score, athlete_id, training_date")
     .gte("training_date", new Date(Date.now() - 28 * 86400000).toISOString().split("T")[0]);
-  handleError(trainingError, "team-intelligence.getTeamOverview.training");
+  handleError(trainingError, "team-intelligence.get-team-overview.training");
 
   const athleteLoads: Record<string, number[]> = {};
   (trainingData ?? []).forEach((t) => {
@@ -96,11 +96,11 @@ export interface AthleteWellnessSummary {
 export async function getTeamWellness(): Promise<AthleteWellnessSummary[]> {
   const supabase = createClient();
   const { data: athletes, error: athletesError } = await supabase.from("athletes").select("id, full_name");
-  handleError(athletesError, "team-intelligence.getTeamWellness.athletes");
+  handleError(athletesError, "team-intelligence.get-team-wellness.athletes");
   const { data: entries, error: entriesError } = await supabase
     .from("wellness_entries")
     .select("athlete_id, wellness_score");
-  handleError(entriesError, "team-intelligence.getTeamWellness.entries");
+  handleError(entriesError, "team-intelligence.get-team-wellness.entries");
 
   const map = new Map<string, { name: string; scores: number[] }>();
   (athletes ?? []).forEach((a) => map.set(a.id, { name: a.full_name, scores: [] }));
@@ -132,13 +132,13 @@ export interface AthleteAcwrSummary {
 export async function getTeamAcwr(): Promise<AthleteAcwrSummary[]> {
   const supabase = createClient();
   const { data: athletes, error: athletesError } = await supabase.from("athletes").select("id, full_name");
-  handleError(athletesError, "team-intelligence.getTeamAcwr.athletes");
+  handleError(athletesError, "team-intelligence.get-team-acwr.athletes");
   const cutoff = new Date(Date.now() - 28 * 86400000).toISOString().split("T")[0];
   const { data: entries, error: entriesError } = await supabase
     .from("training_entries")
     .select("athlete_id, load_score, training_date")
     .gte("training_date", cutoff);
-  handleError(entriesError, "team-intelligence.getTeamAcwr.entries");
+  handleError(entriesError, "team-intelligence.get-team-acwr.entries");
 
   const athleteLoads = new Map<string, { name: string; loads: number[] }>();
   (athletes ?? []).forEach((a) => athleteLoads.set(a.id, { name: a.full_name, loads: [] }));
@@ -174,12 +174,12 @@ export async function getAllInjuries(): Promise<(InjuryRecord & { athlete_name?:
     .from("injuries")
     .select("*")
     .order("injury_date", { ascending: false });
-  handleError(injuriesError, "team-intelligence.getAllInjuries.injuries");
+  handleError(injuriesError, "team-intelligence.get-all-injuries.injuries");
 
   const { data: athletes, error: athletesError } = await supabase
     .from("athletes")
     .select("id, full_name");
-  handleError(athletesError, "team-intelligence.getAllInjuries.athletes");
+  handleError(athletesError, "team-intelligence.get-all-injuries.athletes");
 
   const nameMap = new Map((athletes ?? []).map((a) => [a.id, a.full_name]));
   return (injuries ?? []).map((i) => ({
@@ -201,9 +201,9 @@ export interface WeeklyRiskPoint {
 export async function getTeamRiskHeatmap(): Promise<WeeklyRiskPoint[]> {
   const supabase = createClient();
   const { data: athletes, error: athletesError } = await supabase.from("athletes").select("id, full_name");
-  handleError(athletesError, "team-intelligence.getTeamRiskHeatmap.athletes");
+  handleError(athletesError, "team-intelligence.get-team-risk-heatmap.athletes");
   const { data: injuries, error: injuriesError } = await supabase.from("injuries").select("*");
-  handleError(injuriesError, "team-intelligence.getTeamRiskHeatmap.injuries");
+  handleError(injuriesError, "team-intelligence.get-team-risk-heatmap.injuries");
 
   const points: WeeklyRiskPoint[] = [];
   const now = new Date();

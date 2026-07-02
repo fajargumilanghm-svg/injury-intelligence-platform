@@ -102,13 +102,13 @@ export async function getPredictiveAnalytics(
       .single(),
   ]);
 
-  handleError(wellnessRes.error, "getPredictiveAnalytics:wellness");
-  handleError(trainingRes.error, "getPredictiveAnalytics:training");
-  handleError(athleteRes.error, "getPredictiveAnalytics:athlete");
+  handleError(wellnessRes.error, "predictive-analytics.get-predictive-analytics.wellness");
+  handleError(trainingRes.error, "predictive-analytics.get-predictive-analytics.training");
+  handleError(athleteRes.error, "predictive-analytics.get-predictive-analytics.athlete");
 
-  const wellness: WellnessEntry[] = handleData<WellnessEntry>(wellnessRes.data, null, "getPredictiveAnalytics:wellness");
-  const training: TrainingEntry[] = handleData<TrainingEntry>(trainingRes.data, null, "getPredictiveAnalytics:training");
-  const athlete: Athlete | null = handleSingle<Athlete>(athleteRes.data, null, "getPredictiveAnalytics:athlete");
+  const wellness: WellnessEntry[] = handleData<WellnessEntry>(wellnessRes.data, null, "predictive-analytics.get-predictive-analytics.wellness");
+  const training: TrainingEntry[] = handleData<TrainingEntry>(trainingRes.data, null, "predictive-analytics.get-predictive-analytics.training");
+  const athlete: Athlete | null = handleSingle<Athlete>(athleteRes.data, null, "predictive-analytics.get-predictive-analytics.athlete");
 
   if (wellness.length === 0 && training.length === 0) return null;
 

@@ -15,7 +15,7 @@ export async function getTrainingEntries(athleteId: string): Promise<TrainingEnt
     .select("*")
     .eq("athlete_id", athleteId)
     .order("training_date", { ascending: false });
-  return handleData<TrainingEntry>(data, error, "training.getAll");
+  return handleData<TrainingEntry>(data, error, "training.get-all");
 }
 
 export async function getTodayTraining(athleteId: string): Promise<TrainingEntry | null> {
@@ -27,7 +27,7 @@ export async function getTodayTraining(athleteId: string): Promise<TrainingEntry
     .eq("athlete_id", athleteId)
     .eq("training_date", today)
     .single();
-  return handleSingle<TrainingEntry>(data, error, "training.getToday");
+  return handleSingle<TrainingEntry>(data, error, "training.get-today");
 }
 
 export async function submitTraining(
@@ -74,7 +74,7 @@ export async function getTrainingTrend(athleteId: string, days = 30): Promise<{ 
     .eq("athlete_id", athleteId)
     .gte("training_date", since.toISOString().split("T")[0])
     .order("training_date", { ascending: true });
-  const entries = handleData<TrainingEntry>(data, error, "training.getTrend");
+  const entries = handleData<TrainingEntry>(data, error, "training.get-trend");
   return entries.map((e) => ({
     date: new Date(e.training_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
     load_score: e.load_score,
@@ -144,7 +144,7 @@ export async function getAcwrTrend(athleteId: string, days = 60): Promise<AcwrDa
     .eq("athlete_id", athleteId)
     .gte("training_date", since.toISOString().split("T")[0])
     .order("training_date", { ascending: true });
-  const entries = handleData<TrainingEntry>(data, error, "training.getAcwrTrend");
+  const entries = handleData<TrainingEntry>(data, error, "training.get-acwr-trend");
 
   const points: AcwrDataPoint[] = [];
   const dayMap = new Map<string, number>();
