@@ -373,6 +373,57 @@ CREATE POLICY "assessments_delete"
   ON assessments FOR DELETE
   USING (auth.role() = 'authenticated');
 
+-- Appointments
+CREATE TABLE appointments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  athlete_id UUID NOT NULL REFERENCES athletes(id) ON DELETE CASCADE,
+  provider_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  appointment_date TIMESTAMPTZ NOT NULL,
+  type TEXT NOT NULL DEFAULT 'consultation',
+  status TEXT NOT NULL DEFAULT 'scheduled',
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE appointments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "appointments_select"
+  ON appointments FOR SELECT
+  USING (auth.role() = 'authenticated');
+
+CREATE POLICY "appointments_insert"
+  ON appointments FOR INSERT
+  WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "appointments_update"
+  ON appointments FOR UPDATE
+  USING (auth.role() = 'authenticated');
+
+CREATE POLICY "appointments_delete"
+  ON appointments FOR DELETE
+  USING (auth.role() = 'authenticated');
+
+-- Messages
+CREATE TABLE messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  sender_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  receiver_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  read BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "messages_select"
+  ON messages FOR SELECT
+  USING (auth.uid() = sender_id OR auth.uid() = receiver_id);
+
+CREATE POLICY "messages_insert"
+  ON messages FOR INSERT
+  WITH CHECK (auth.uid() = sender_id);
+
 -- Create indexes for performance
 CREATE INDEX idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX idx_notifications_read ON notifications(read);
@@ -387,6 +438,10 @@ CREATE INDEX idx_wellness_entries_athlete_id ON wellness_entries(athlete_id);
 CREATE INDEX idx_wellness_entries_submitted_at ON wellness_entries(submitted_at);
 CREATE INDEX idx_physical_screenings_athlete_id ON physical_screenings(athlete_id);
 CREATE INDEX idx_assessments_athlete_id ON assessments(athlete_id);
+CREATE INDEX idx_appointments_athlete_id ON appointments(athlete_id);
+CREATE INDEX idx_appointments_provider_id ON appointments(provider_id);
+CREATE INDEX idx_messages_sender ON messages(sender_id);
+CREATE INDEX idx_messages_receiver ON messages(receiver_id);
 
 -- Auto-update updated_at trigger
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -407,4 +462,8 @@ CREATE TRIGGER update_athletes_updated_at
 
 CREATE TRIGGER update_injuries_updated_at
   BEFORE UPDATE ON injuries
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_appointments_updated_at
+  BEFORE UPDATE ON appointments
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

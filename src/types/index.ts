@@ -281,6 +281,27 @@ export interface Assessment {
   created_at: string;
 }
 
+export interface Appointment {
+  id: string;
+  athlete_id: string;
+  provider_id: string;
+  appointment_date: string;
+  type: string;
+  status: string;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Message {
+  id: string;
+  sender_id: string;
+  receiver_id: string;
+  content: string;
+  read: boolean;
+  created_at: string;
+}
+
 export interface NavItem {
   label: string;
   href: string;

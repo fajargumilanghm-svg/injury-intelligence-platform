@@ -137,6 +137,7 @@ model Athlete {
   wellnessEntries  WellnessEntry[]
   physicalScreenings PhysicalScreening[]
   assessments      Assessment[]
+  appointments     Appointment[]
 
   @@map("athletes")
 }
@@ -280,4 +281,31 @@ model Assessment {
   athlete Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
 
   @@map("assessments")
+}
+
+model Appointment {
+  id              String   @id @default(uuid())
+  athleteId       String   @map("athlete_id")
+  providerId      String   @map("provider_id")
+  appointmentDate DateTime @map("appointment_date")
+  type            String
+  status          String
+  notes           String?
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  athlete Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@map("appointments")
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String   @map("sender_id")
+  receiverId String   @map("receiver_id")
+  content    String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("messages")
 }
