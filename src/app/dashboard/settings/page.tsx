@@ -32,16 +32,13 @@ export default function SettingsPage() {
     );
   }
 
-  if (!athleteId) {
+  if (!profile) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center space-y-4">
-          <h2 className="text-2xl font-semibold">Athlete Profile Required</h2>
+          <h2 className="text-2xl font-semibold">Profile Not Found</h2>
           <p className="text-muted-foreground">
-            You need an athlete profile to view this page.
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Please contact your administrator or refresh the page after setting up your profile.
+            Please sign in to access settings.
           </p>
         </div>
       </div>
