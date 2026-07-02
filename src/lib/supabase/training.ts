@@ -113,10 +113,16 @@ export async function getTrainingSummary(athleteId: string): Promise<TrainingSum
     .filter((e) => new Date(e.training_date) >= monthAgo)
     .reduce((s, e) => s + e.load_score, 0);
 
-  const acuteLoad = weeklyLoad / 7;
-  const chronicLoad = entries
-    .filter((e) => new Date(e.training_date) >= monthAgo)
-    .reduce((s, e) => s + e.load_score, 0) / 28;
+  const acuteEntries = entries.filter((e) => new Date(e.training_date) >= weekAgo);
+  const chronicEntries = entries.filter((e) => new Date(e.training_date) >= monthAgo);
+
+  const acuteDays = new Set(acuteEntries.map((e) => e.training_date)).size;
+  const chronicDays = new Set(chronicEntries.map((e) => e.training_date)).size;
+
+  const acuteLoad = acuteDays > 0 ? weeklyLoad / acuteDays : 0;
+  const chronicLoad = chronicDays > 0
+    ? chronicEntries.reduce((s, e) => s + e.load_score, 0) / chronicDays
+    : 0;
 
   const acwr = chronicLoad > 0 ? Math.round((acuteLoad / chronicLoad) * 100) / 100 : 0;
 
