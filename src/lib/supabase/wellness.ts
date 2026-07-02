@@ -7,9 +7,9 @@ import { handleData, handleSingle, handleError } from "./helpers";
 function calculateWellnessScore(entry: Omit<WellnessEntry, "id" | "wellness_score" | "submitted_at" | "athlete_id">): number {
   const values = [
     entry.sleep_quality,
-    11 - entry.fatigue,
-    11 - entry.muscle_soreness,
-    11 - entry.stress_level,
+    10 - entry.fatigue,
+    10 - entry.muscle_soreness,
+    10 - entry.stress_level,
     entry.mood_state,
     entry.recovery_feeling,
   ];
