@@ -271,6 +271,16 @@ export interface PredictiveAnalytics {
   };
 }
 
+export interface Assessment {
+  id: string;
+  athlete_id: string;
+  assessment_date: string;
+  type: string;
+  score: number;
+  notes: string | null;
+  created_at: string;
+}
+
 export interface NavItem {
   label: string;
   href: string;

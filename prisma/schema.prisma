@@ -136,6 +136,7 @@ model Athlete {
   trainingEntries  TrainingEntry[]
   wellnessEntries  WellnessEntry[]
   physicalScreenings PhysicalScreening[]
+  assessments      Assessment[]
 
   @@map("athletes")
 }
@@ -265,4 +266,18 @@ model PhysicalScreening {
   athlete Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
 
   @@map("physical_screenings")
+}
+
+model Assessment {
+  id              String   @id @default(uuid())
+  athleteId       String   @map("athlete_id")
+  assessmentDate  DateTime @map("assessment_date") @db.Date
+  type            String
+  score           Decimal
+  notes           String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  athlete Athlete @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@map("assessments")
 }

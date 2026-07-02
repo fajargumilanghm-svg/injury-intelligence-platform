@@ -1,4 +1,5 @@
 -- ⚠️ Drop existing objects first (safe to re-run)
+DROP TABLE IF EXISTS assessments CASCADE;
 DROP TABLE IF EXISTS physical_screenings CASCADE;
 DROP TABLE IF EXISTS wellness_entries CASCADE;
 DROP TABLE IF EXISTS training_entries CASCADE;
@@ -343,6 +344,35 @@ CREATE POLICY "screenings_delete"
   ON physical_screenings FOR DELETE
   USING (auth.role() = 'authenticated');
 
+-- Assessments
+CREATE TABLE assessments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  athlete_id UUID NOT NULL REFERENCES athletes(id) ON DELETE CASCADE,
+  assessment_date DATE NOT NULL,
+  type TEXT NOT NULL DEFAULT 'fms',
+  score NUMERIC NOT NULL,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE assessments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "assessments_select"
+  ON assessments FOR SELECT
+  USING (auth.role() = 'authenticated');
+
+CREATE POLICY "assessments_insert"
+  ON assessments FOR INSERT
+  WITH CHECK (auth.role() = 'authenticated');
+
+CREATE POLICY "assessments_update"
+  ON assessments FOR UPDATE
+  USING (auth.role() = 'authenticated');
+
+CREATE POLICY "assessments_delete"
+  ON assessments FOR DELETE
+  USING (auth.role() = 'authenticated');
+
 -- Create indexes for performance
 CREATE INDEX idx_notifications_user_id ON notifications(user_id);
 CREATE INDEX idx_notifications_read ON notifications(read);
@@ -356,6 +386,7 @@ CREATE INDEX idx_training_entries_date ON training_entries(training_date);
 CREATE INDEX idx_wellness_entries_athlete_id ON wellness_entries(athlete_id);
 CREATE INDEX idx_wellness_entries_submitted_at ON wellness_entries(submitted_at);
 CREATE INDEX idx_physical_screenings_athlete_id ON physical_screenings(athlete_id);
+CREATE INDEX idx_assessments_athlete_id ON assessments(athlete_id);
 
 -- Auto-update updated_at trigger
 CREATE OR REPLACE FUNCTION update_updated_at_column()
