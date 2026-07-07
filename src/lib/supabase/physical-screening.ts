@@ -78,11 +78,13 @@ function calcSlhRatio(v: Record<string, number | undefined>): number | null {
   return Math.round((Math.min(left, right) / Math.max(left, right)) * 100);
 }
 
-function calcYbtComposite(directions: (number | undefined)[]): number | null {
+function calcYbtComposite(directions: (number | undefined)[], legLength: number | undefined): number | null {
   const vals = directions.filter((d): d is number => d !== undefined);
   if (vals.length === 0 || vals.some((v) => v === 0)) return null;
+  if (legLength === undefined || legLength === 0) return null;
   const sum = vals.reduce((a, b) => a + b, 0);
-  return Math.round((sum / (vals.length * 3)) * 100);
+  // Correct YBT composite: sum_of_reaches / (leg_length * 3) * 100
+  return Math.round((sum / (legLength * 3)) * 100);
 }
 
 export async function createScreening(
@@ -114,10 +116,10 @@ export async function createScreening(
       ybt_posterolateral_left: values.ybt_posterolateral_left ?? null,
       ybt_posterolateral_right: values.ybt_posterolateral_right ?? null,
       ybt_composite_left: values.ybt_anterior_left !== undefined && values.ybt_posteromedial_left !== undefined && values.ybt_posterolateral_left !== undefined
-        ? calcYbtComposite([values.ybt_anterior_left, values.ybt_posteromedial_left, values.ybt_posterolateral_left])
+        ? calcYbtComposite([values.ybt_anterior_left, values.ybt_posteromedial_left, values.ybt_posterolateral_left], values.ybt_leg_length)
         : null,
       ybt_composite_right: values.ybt_anterior_right !== undefined && values.ybt_posteromedial_right !== undefined && values.ybt_posterolateral_right !== undefined
-        ? calcYbtComposite([values.ybt_anterior_right, values.ybt_posteromedial_right, values.ybt_posterolateral_right])
+        ? calcYbtComposite([values.ybt_anterior_right, values.ybt_posteromedial_right, values.ybt_posterolateral_right], values.ybt_leg_length)
         : null,
 
       sit_and_reach_cm: values.sit_and_reach_cm ?? null,
@@ -133,6 +135,61 @@ export async function createScreening(
     .select()
     .single();
   return handleSingle<PhysicalScreening>(data, error, "physical-screening.create");
+}
+
+export async function updateScreening(
+  id: string,
+  values: Partial<ScreeningValues>
+): Promise<PhysicalScreening | null> {
+  const supabase = createClient();
+  const updateData: Record<string, unknown> = { ...values };
+
+  // Recalculate derived fields if contributing inputs are provided
+  const hasFms = [
+    "fms_deep_squat", "fms_hurdle_step", "fms_inline_lunge",
+    "fms_shoulder_mobility", "fms_active_slr",
+    "fms_trunk_stability", "fms_rotary_stability",
+  ].some((k) => k in values);
+  if (hasFms) {
+    const fmsTotal = calcFmsTotal(values as unknown as Record<string, number | undefined>);
+    if (fmsTotal !== null) updateData.fms_total = fmsTotal;
+  }
+
+  const hasYbtLeft = values.ybt_anterior_left !== undefined || values.ybt_posteromedial_left !== undefined || values.ybt_posterolateral_left !== undefined;
+  const hasYbtRight = values.ybt_anterior_right !== undefined || values.ybt_posteromedial_right !== undefined || values.ybt_posterolateral_right !== undefined;
+  if (hasYbtLeft || hasYbtRight) {
+    // Fetch existing record to merge partial updates
+    const { data: existing } = await supabase.from("physical_screenings").select("*").eq("id", id).single();
+    if (existing) {
+      const merged = { ...existing, ...values };
+      if (hasYbtLeft && merged.ybt_anterior_left !== undefined && merged.ybt_posteromedial_left !== undefined && merged.ybt_posterolateral_left !== undefined) {
+        updateData.ybt_composite_left = calcYbtComposite(
+          [merged.ybt_anterior_left, merged.ybt_posteromedial_left, merged.ybt_posterolateral_left],
+          merged.ybt_leg_length
+        );
+      }
+      if (hasYbtRight && merged.ybt_anterior_right !== undefined && merged.ybt_posteromedial_right !== undefined && merged.ybt_posterolateral_right !== undefined) {
+        updateData.ybt_composite_right = calcYbtComposite(
+          [merged.ybt_anterior_right, merged.ybt_posteromedial_right, merged.ybt_posterolateral_right],
+          merged.ybt_leg_length
+        );
+      }
+    }
+  }
+
+  const hasSlh = values.slh_left_cm !== undefined || values.slh_right_cm !== undefined;
+  if (hasSlh) {
+    const slhRatio = calcSlhRatio(values as unknown as Record<string, number | undefined>);
+    if (slhRatio !== null) updateData.slh_ratio = slhRatio;
+  }
+
+  const { data, error } = await supabase
+    .from("physical_screenings")
+    .update(updateData)
+    .eq("id", id)
+    .select()
+    .single();
+  return handleSingle<PhysicalScreening>(data, error, "physical-screening.update");
 }
 
 export async function deleteScreening(id: string): Promise<void> {

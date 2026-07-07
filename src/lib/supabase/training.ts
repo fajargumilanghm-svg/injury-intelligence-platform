@@ -20,7 +20,8 @@ export async function getTrainingEntries(athleteId: string): Promise<TrainingEnt
 
 export async function getTodayTraining(athleteId: string): Promise<TrainingEntry | null> {
   const supabase = createClient();
-  const today = new Date().toISOString().split("T")[0];
+  // Use local date to avoid UTC timezone mismatch
+  const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD in local timezone
   const { data, error } = await supabase
     .from("training_entries")
     .select("*")
@@ -56,6 +57,30 @@ export async function submitTraining(
     .select()
     .single();
   return handleSingle<TrainingEntry>(data, error, "training.submit");
+}
+
+export async function updateTraining(
+  id: string,
+  values: Partial<{
+    training_date: string;
+    training_type: TrainingType;
+    duration_minutes: number;
+    intensity_rpe: number;
+    notes: string;
+  }>
+): Promise<TrainingEntry | null> {
+  const supabase = createClient();
+  const updateData: Record<string, unknown> = { ...values };
+  if (values.duration_minutes !== undefined && values.intensity_rpe !== undefined) {
+    updateData.load_score = calculateLoadScore(values.duration_minutes, values.intensity_rpe);
+  }
+  const { data, error } = await supabase
+    .from("training_entries")
+    .update(updateData)
+    .eq("id", id)
+    .select()
+    .single();
+  return handleSingle<TrainingEntry>(data, error, "training.update");
 }
 
 export async function deleteTraining(id: string): Promise<void> {
@@ -116,12 +141,10 @@ export async function getTrainingSummary(athleteId: string): Promise<TrainingSum
   const acuteEntries = entries.filter((e) => new Date(e.training_date) >= weekAgo);
   const chronicEntries = entries.filter((e) => new Date(e.training_date) >= monthAgo);
 
-  const acuteDays = new Set(acuteEntries.map((e) => e.training_date)).size;
-  const chronicDays = new Set(chronicEntries.map((e) => e.training_date)).size;
-
-  const acuteLoad = acuteDays > 0 ? weeklyLoad / acuteDays : 0;
-  const chronicLoad = chronicDays > 0
-    ? chronicEntries.reduce((s, e) => s + e.load_score, 0) / chronicDays
+  // ACWR: divide by 7 and 28 calendar days (standard), not number of days with data
+  const acuteLoad = acuteEntries.length > 0 ? acuteEntries.reduce((s, e) => s + e.load_score, 0) / 7 : 0;
+  const chronicLoad = chronicEntries.length > 0
+    ? chronicEntries.reduce((s, e) => s + e.load_score, 0) / 28
     : 0;
 
   const acwr = chronicLoad > 0 ? Math.round((acuteLoad / chronicLoad) * 100) / 100 : 0;

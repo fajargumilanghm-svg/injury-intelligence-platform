@@ -2,6 +2,22 @@ import * as XLSX from "xlsx";
 import type { WellnessEntry, TrainingEntry, InjuryRecord } from "@/types";
 import type { InjuryRiskResult } from "@/lib/supabase/injury-risk";
 
+function createDownload(buffer: Uint8Array, filename: string): void {
+  const blob = new Blob([buffer as unknown as ArrayBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function writeWorkbook(wb: XLSX.WorkBook): Uint8Array {
+  return XLSX.write(wb, { bookType: "xlsx", type: "array" });
+}
+
 // ─── Wellness Excel ────────────────────────────────────────
 
 export function generateWellnessExcel(entries: WellnessEntry[], athleteName: string): void {
@@ -30,7 +46,8 @@ export function generateWellnessExcel(entries: WellnessEntry[], athleteName: str
   const dataWs = XLSX.utils.aoa_to_sheet([headers, ...rows]);
   XLSX.utils.book_append_sheet(wb, dataWs, "Wellness Data");
 
-  XLSX.writeFile(wb, `wellness-report-${athleteName.replace(/\s+/g, "-").toLowerCase()}.xlsx`);
+  const buffer = writeWorkbook(wb);
+  createDownload(buffer, `wellness-report-${athleteName.replace(/\s+/g, "-").toLowerCase()}.xlsx`);
 }
 
 // ─── Training Load Excel ───────────────────────────────────
@@ -64,7 +81,8 @@ export function generateTrainingExcel(entries: TrainingEntry[], athleteName: str
   const dataWs = XLSX.utils.aoa_to_sheet([headers, ...rows]);
   XLSX.utils.book_append_sheet(wb, dataWs, "Training Data");
 
-  XLSX.writeFile(wb, `training-report-${athleteName.replace(/\s+/g, "-").toLowerCase()}.xlsx`);
+  const buffer = writeWorkbook(wb);
+  createDownload(buffer, `training-report-${athleteName.replace(/\s+/g, "-").toLowerCase()}.xlsx`);
 }
 
 // ─── Injury Risk Excel ─────────────────────────────────────
@@ -93,7 +111,8 @@ export function generateInjuryRiskExcel(result: InjuryRiskResult, athleteName: s
   const factorsWs = XLSX.utils.aoa_to_sheet([headers, ...rows]);
   XLSX.utils.book_append_sheet(wb, factorsWs, "Risk Factors");
 
-  XLSX.writeFile(wb, `injury-risk-${athleteName.replace(/\s+/g, "-").toLowerCase()}.xlsx`);
+  const buffer = writeWorkbook(wb);
+  createDownload(buffer, `injury-risk-${athleteName.replace(/\s+/g, "-").toLowerCase()}.xlsx`);
 }
 
 // ─── Injury Management Excel ───────────────────────────────
@@ -134,5 +153,6 @@ export function generateInjuryManagementExcel(injuries: InjuryRecord[], athleteN
   const dataWs = XLSX.utils.aoa_to_sheet([headers, ...rows]);
   XLSX.utils.book_append_sheet(wb, dataWs, "All Injuries");
 
-  XLSX.writeFile(wb, `injury-management-${athleteName.replace(/\s+/g, "-").toLowerCase()}.xlsx`);
+  const buffer = writeWorkbook(wb);
+  createDownload(buffer, `injury-management-${athleteName.replace(/\s+/g, "-").toLowerCase()}.xlsx`);
 }

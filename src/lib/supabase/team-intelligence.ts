@@ -222,11 +222,15 @@ export async function getTeamRiskHeatmap(): Promise<WeeklyRiskPoint[]> {
         i.status === "active" || i.status === "recovering"
       );
 
+      // Deterministic baseline risk for athletes without active injuries
+      // Uses athleteId hash + week offset for consistent but varied values
+      const athleteHash = athleteId.split("").reduce((sum: number, char: string) => sum + char.charCodeAt(0), 0);
       const baseRisk = activeInjuries.length > 0
         ? 30 + activeInjuries.length * 15 + highSevCount * 10
-        : 15 + Math.round(Math.random() * 20);
+        : 15 + (athleteHash % 15) + w;
 
-      const riskScore = Math.min(95, Math.max(5, baseRisk + Math.round((Math.random() - 0.5) * 20)));
+      const spread = ((athleteHash * 7 + w * 3) % 21) - 10;
+      const riskScore = Math.min(95, Math.max(5, baseRisk + spread));
       const riskLevel: WeeklyRiskPoint["risk_level"] =
         riskScore >= 70 ? "high" : riskScore >= 40 ? "moderate" : "low";
 

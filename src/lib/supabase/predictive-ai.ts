@@ -82,7 +82,7 @@ export async function predictInjuryRisk(athleteId: string): Promise<AIPrediction
   // ─── Wellness Trend ─────────────────────────────────────
 
   const wellnessTrend = wellness.length > 6
-    ? wellness.slice(0, 7).reduce((s, w, i) => s + (i > 0 ? w.wellness_score - wellness[i - 1].wellness_score : 0), 0) / 7
+    ? wellness.slice(0, 7).reduce((s, w, i) => s + (i > 0 ? wellness[i - 1].wellness_score - w.wellness_score : 0), 0) / 7
     : 0;
 
   // ─── Calculate Individual Factor Scores (0-100) ─────────

@@ -29,7 +29,8 @@ export async function getWellnessEntries(athleteId: string): Promise<WellnessEnt
 
 export async function getTodayEntry(athleteId: string): Promise<WellnessEntry | null> {
   const supabase = createClient();
-  const today = new Date().toISOString().split("T")[0];
+  // Use local date to avoid UTC timezone mismatch
+  const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD in local timezone
   const { data, error } = await supabase
     .from("wellness_entries")
     .select("*")
@@ -52,6 +53,45 @@ export async function submitWellness(
     .select()
     .single();
   return handleSingle<WellnessEntry>(data, error, "wellness.submit");
+}
+
+export async function updateWellness(
+  id: string,
+  values: Partial<Omit<WellnessEntry, "id" | "submitted_at" | "athlete_id">>
+): Promise<WellnessEntry | null> {
+  const supabase = createClient();
+  const updateData: Record<string, unknown> = { ...values };
+  // Recalculate wellness score if any contributing field is updated
+  const wellnessFields = ["sleep_quality", "fatigue", "muscle_soreness", "stress_level", "mood_state", "recovery_feeling"];
+  const hasWellnessField = wellnessFields.some((f) => f in values);
+  if (hasWellnessField) {
+    // Fetch existing entry to merge with partial update
+    const { data: existing } = await supabase.from("wellness_entries").select("*").eq("id", id).single();
+    if (existing) {
+      const merged = {
+        sleep_quality: values.sleep_quality ?? existing.sleep_quality,
+        fatigue: values.fatigue ?? existing.fatigue,
+        muscle_soreness: values.muscle_soreness ?? existing.muscle_soreness,
+        stress_level: values.stress_level ?? existing.stress_level,
+        mood_state: values.mood_state ?? existing.mood_state,
+        recovery_feeling: values.recovery_feeling ?? existing.recovery_feeling,
+      };
+      updateData.wellness_score = calculateWellnessScore(merged);
+    }
+  }
+  const { data, error } = await supabase
+    .from("wellness_entries")
+    .update(updateData)
+    .eq("id", id)
+    .select()
+    .single();
+  return handleSingle<WellnessEntry>(data, error, "wellness.update");
+}
+
+export async function deleteWellness(id: string): Promise<void> {
+  const supabase = createClient();
+  const { error } = await supabase.from("wellness_entries").delete().eq("id", id);
+  handleError(error, "wellness.delete");
 }
 
 export async function getWellnessTrend(athleteId: string, days = 30): Promise<WellnessTrend[]> {

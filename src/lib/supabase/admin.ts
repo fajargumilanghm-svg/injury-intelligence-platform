@@ -18,6 +18,6 @@ export async function updateUserRole(userId: string, role: string): Promise<void
   const { error } = await supabase
     .from("user_profiles")
     .update({ role })
-    .eq("id", userId);
+    .eq("user_id", userId);
   handleError(error, "admin.update-role");
 }
